@@ -14,10 +14,10 @@
 
 | | |
 | --- | --- |
-| AI assistant | |
-| Exact model name | |
-| Implementation language | |
-| Date of the runs | |
+| AI assistant | Qoder |
+| Exact model name | Qwen3.8-Max |
+| Implementation language | Python |
+| Date of the runs |  |
 
 **Non-Python students only** — paste your substituted Prompt B text here, so the substitution can
 be checked:
@@ -39,25 +39,27 @@ be checked:
 **Prompt sent** (should be exactly one sentence):
 
 ```
-
+Write Python code to analyze student marks.
 ```
 
 **Assumptions the AI made that I never gave it** — list them, one per line. A data format, a pass
 threshold, a rounding rule, an input method, an invented feature all count.
 
-1.
-2.
-3.
+1. Generate a sample csv
+2. Added an from int to "A, B, C" format
+3. Treshold is >40
+4. How to do the interface of output format
+5. Used a lot of libraries 
 
 **Questions it should have asked and did not:**
 
-1.
-2.
+1. What a pass score?
+2. And what mean analyze a student marks?
 
-**Is the function named `analyze_marks` with the required signature?** yes / no — if no, what is it
-called:
+**Is the function named `analyze_marks` with the required signature?** no — if no, what is it
+called: def analyze(subjects, students)
 
-**First impression before testing** (one sentence — you will compare this with section 6 later):
+**First impression before testing** (one sentence — you will compare this with section 6 later): Instead of a single function, it was split into several, yet the code remains readable.
 
 ---
 
@@ -66,18 +68,21 @@ called:
 **Prompt sent** (paste it in full, including any substitutions):
 
 ```
-
+You are a Python developer. Implement analyze_marks(marks, pass_mark=50). Return
+average, highest, lowest, and pass_rate in a dictionary. Accept marks from 0 to 100;
+raise ValueError for an empty list, non-numeric values, or out-of-range values. Use
+no external libraries. Return code plus a short explanation.
 ```
 
 **What B fixed compared to A:**
 
-1.
-2.
+1. He created a single function named analyze_marks
+2. Ai didnt add a exteral data like a CSV
 
 **What B still leaves open:**
 
-1.
-2.
+1. function handle only single list with marks
+2. there is only count of passed marks, nothing else
 
 ---
 
