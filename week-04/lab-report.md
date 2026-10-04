@@ -27,8 +27,35 @@ AI's first replies are saved as files in `models/original/` — do not paste the
 
 ### 2.1 Task 1 — use-case prompt
 
-```text
-<paste>
+```# Approved stories — Smart Campus study room booking
+
+**Source of this set:** the reference set
+
+## Scenario (from the Lesson 04 practice deck, slide 7)
+
+Students view room availability, book a room, and cancel their own bookings. Administrators block
+or unblock rooms and review usage.
+
+- **R1** Future start, with duration greater than 0 and at most 2 hours.
+- **R2** Active bookings for the same room cannot overlap.
+- **R3** A blocked room cannot accept a new booking.
+- **R4** A successful booking produces a confirmation.
+
+## Reference set
+
+| ID | Story | Rules |
+| --- | --- | --- |
+| US-01 | As a student, I want to book a free study room for a time slot, so that I have a place to work, and I get a confirmation when the booking succeeds. | R1, R2, R3, R4 |
+| US-02 | As a student, I want to see which rooms are free at a given time, so that I can choose one before booking. | — |
+| US-03 | As a student, I want to cancel one of my own bookings, so that the room is released for others. | R2 |
+| US-04 | As an administrator, I want to block a room, so that no new bookings can be made for it. | R3 |
+| US-05 | As an administrator, I want to unblock a room, so that students can book it again. | R3 |
+| US-06 | As an administrator, I want to review how rooms are used, so that I can plan capacity. | — |
+
+**Out of scope** (do not model): payments, equipment in rooms, recurring bookings, waiting lists,
+notifications other than the booking confirmation, user registration.
+
+This is the Smart Campus scenario, its rules R1-R4 and my approved user stories. I will ask you for several UML diagrams in PlantUML. Use only this scenario. Wait for my first request.
 ```
 
 ### 2.2 Task 2 — class prompt
@@ -59,15 +86,15 @@ AI's first replies are saved as files in `models/original/` — do not paste the
 
 ## 3. Task 1 — use-case review
 
-**Assumptions the AI listed:** <one line each, or "the AI listed none" — that is a finding too>
+**Assumptions the AI listed:** the AI listed none
 
 At least **two** findings. A finding names the element, the problem and the rule or story that
 proves it is a problem.
 
 | # | Element | Problem | Rule or story | Fix |
-| --- | --- | --- | --- | --- |
-| 1 | <e.g. Student → Send confirmation> | <what is wrong> | <R4 / US-01 / scenario sentence> | <what you changed> |
-| 2 | <element> | <problem> | <rule or story> | <fix> |
+|---|---------|---------|---------------|-----|
+| 1 | `Student --> UC_Book` (association text) | The AI included the phrase "receives confirmation (R4)" directly on the actor's relationship line. Generating a confirmation is an automatic system consequence, not a standalone user action or goal. | R4 / US-01 | Removed text from the association and isolated the confirmation into a separate use case connected via `<<include>>`. |
+| 2 | `<<include>>` dependency | The initial AI diagram lacked the mandatory `' why: <reason>` architectural comment directly above the inclusion link. The automated checker requires explicitly written justification comments. | PlantUML conventions (§4) / UC8 | Added a `' why: R4 - A successful booking produces a confirmation.` comment on the line immediately above the dependency. |
 
 ---
 
