@@ -65,8 +65,7 @@ This is the Smart Campus scenario, its rules R1-R4 and my approved user stories.
 
 ### 2.3 Task 3 — behaviour prompt (3A sequence or 3B activity)
 
-```text
-<paste>
+```Generate a UML activity diagram in PlantUML for Book room. Show the initial node, actions, guarded decisions, and final nodes. Check the time range, blocked-room status, and overlapping bookings. Show confirmation after success and rejection after failure. Use branches rather than parallel paths unless concurrency is required.
 ```
 
 ### 2.4 Focused correction prompts (if you sent any)
@@ -132,14 +131,14 @@ ies>
 
 ## 5. Task 3 — behaviour diagram review
 
-**Option chosen and why:** <3A sequence / 3B activity — one sentence on why>
+**Option chosen and why:** 3B activity - because it allows for a clear, sequential visualization of the business logic rules validation through precise decision diamonds.
 
-**Design components added beyond the domain model:** <name each one, e.g. `BookingService` —
-what it does in one line; write "none" for an activity diagram>
+**Design components added beyond the domain model:** none
 
 | # | Element | Problem | Rule or story | Fix |
-| --- | --- | --- | --- | --- |
-| 1 | <element> | <problem> | <rule or story> | <fix> |
+|---|---------|---------|---------------|-----|
+| 1 | Branch Guards (`then (yes)` / `else (no)`) | The AI used simple words inside regular parentheses for branch decisions, which violates strict PlantUML guidelines. | PlantUML conventions (§4) / AC3 | Formatted all branch decisions to use square brackets inside parentheses: `then ([yes])` and `else ([no])`. |
+| 2 | Guard Logic Structure | The initial AI layout lacked explicitly clear rule identifiers aligned precisely with the required script syntax. | Review questions / AC2 | Standardized all internal decision diamond labels to explicitly state constraints R1, R3, and R2. |
 
 ---
 

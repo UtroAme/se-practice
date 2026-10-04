@@ -1,0 +1,46 @@
+@startuml
+skinparam shadowing false
+title Activity — Book Room (US-01)
+
+start
+
+:Student submits booking request\n(room, start time, duration);
+note right
+  Guards are evaluated fail-fast in the order
+  R1 (time) -> R3 (blocked) -> R2 (overlap):
+  cheapest / most decisive check first.
+  Purely sequential -- no parallel paths.
+end note
+
+if (R1: time range valid?\n(future start, duration > 0 and at most 120 min)) then (yes)
+
+  if (R3: room available?\n(status is not BLOCKED)) then (yes)
+
+    if (R2: slot free?\n(no overlap with ACTIVE bookings of the room)) then (yes)
+
+      :Create Booking\n(status = ACTIVE);
+      :Generate confirmation code;
+      :Return confirmation to student;
+      note left
+        R4: every successful booking
+        produces a confirmation.
+      end note
+      stop
+
+    else (no)
+      :reason = "slot overlaps an active booking (R2)";
+    endif
+
+  else (no)
+    :reason = "room is blocked (R3)";
+  endif
+
+else (no)
+  :reason = "invalid time range (R1)";
+endif
+
+:Reject booking request;
+:Return rejection (reason);
+stop
+
+@enduml
