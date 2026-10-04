@@ -1,0 +1,58 @@
+@startuml Smart Campus - Domain Class Diagram (Revised)
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+' ========================= Entity classes =========================
+class Student {
+  - studentId : String
+  - name : String
+  --
+  + bookRoom(room : Room, start : DateTime, end : DateTime) : void
+  + cancelBooking(booking : Booking) : void
+}
+
+class Room {
+  - roomId : String
+  - isBlocked : boolean
+  --
+  + block() : void
+  + unblock() : void
+  + checkAvailability(start : DateTime, end : DateTime) : boolean
+}
+
+class Booking {
+  - bookingId : String
+  - startTime : DateTime
+  - endTime : DateTime
+  - status : String
+  - confirmationCode : String
+  --
+  + cancel() : void
+  + isValidDuration() : boolean
+}
+
+' ========================= Associations =========================
+' Reading: One student makes 0..* bookings; each booking belongs to exactly 1 student.
+Student "1" -- "0..*" Booking : makes >
+
+' Reading: One room contains 0..* bookings; each booking is associated with exactly 1 room.
+Room "1" -- "0..*" Booking : contains >
+
+' ========================= Constraints & Notes =========================
+note right of Booking
+  <b>{R1}</b> startTime in future, 0 < duration <= 2 hours.
+  <b>{R4}</b> confirmationCode generated upon success.
+  <b>{R2} Active bookings for the same room cannot overlap.</b>
+  <i>Assumption:</i> Touching bookings (e.g., 12:00 end, 12:00 start)
+  do NOT overlap under R2.
+end note
+
+note left of Room
+  <b>{R3}</b> A blocked room cannot accept a new booking.
+  <i>Assumption:</i> When an Administrator blocks a room,
+  all existing active future bookings for this room
+  are automatically cancelled.
+end note
+
+@enduml

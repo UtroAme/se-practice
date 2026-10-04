@@ -60,8 +60,7 @@ This is the Smart Campus scenario, its rules R1-R4 and my approved user stories.
 
 ### 2.2 Task 2 — class prompt
 
-```text
-<paste>
+```Create a UML domain class diagram in PlantUML for Smart Campus. Start with Student, Room, and Booking. Add attributes, appropriate operations, and association multiplicities. Add other classes only when requirements justify them. Explain each relationship and list assumptions. Avoid unjustified inheritance or composition.
 ```
 
 ### 2.3 Task 3 — behaviour prompt (3A sequence or 3B activity)
@@ -106,24 +105,28 @@ One row per association in your **revised** class diagram.
 
 | Association | Read left → right | Read right → left | Multiplicities |
 | --- | --- | --- | --- |
-| <Student — Booking> | <one student makes 0..* bookings> | <each booking belongs to exactly 1 student> | <1 / 0..*> |
-| <Room — Booking> | <...> | <...> | <...> |
+|`Student - Booking | one student makes 0..* bookings | each booking belongs to exactly 1 student | 1 ↔ 0..* |
+| Room - Booking | one room contains 0..* bookings | each booking is associated with exactly 1 room | 1 ↔ 0..* |
+
 
 ### 4.2 Constraints the multiplicities cannot show
 
-- R2: <how your diagram states it — which note, on which class>
-- <any other rule that is not visible in multiplicities>
+- R2: Stated in a text note right of the `Booking` class: "Active bookings for the same room cannot overlap. Verified dynamically."
+- R1, R3, R4: Time boundaries (R1: future start, duration <= 2h), conditional state check (R3: block status prevents booking), and system token generation (R4: confirmation code generation) are dynamic rules that cannot be visualized via multiplicities. They are documented in text notes on `Booking` and `Room`.
+ies>
 
 ### 4.3 Assumptions
 
-- A1: <an assumption you had to make — e.g. what happens to existing bookings when a room is blocked>
-- <A2 ...>
+- A1: When an Administrator blocks a room, all existing active future bookings for this room are automatically cancelled by the system.
+- A2: Touching bookings (e.g., 10:00–12:00 and 12:00–13:00) share an exact boundary timestamp but do NOT overlap under rule R2.
 
 ### 4.4 Findings
 
 | # | Element | Problem | Rule or story | Fix |
-| --- | --- | --- | --- | --- |
-| 1 | <element> | <problem> | <rule or story> | <fix> |
+|---|---------|---------|---------------|-----|
+| 1 | `note on link` ({R2}) | The AI placed the R2 non-overlapping constraint as a note directly on the association link line. The conventions explicitly require R2 to be documented inside a `note` attached strictly to the `Booking` class. | PlantUML conventions (§4) / CL8 | Moved the R2 rule text description into a proper `note right of Booking` element. |
+| 2 | `Student.viewAvailableRooms()` & `Room.occupancyRate()` | Layer architecture violation. The AI placed UI search logic and business data aggregation operations inside core domain entities instead of keeping them as pure domain states. | Review questions / CL6 | Removed UI-level search and report operations from domain entities to focus strictly on essential domain concepts. |
+| 3 | `Student.email`, `Room.capacity`, `Room.name` | Unjustified fields. The AI introduced model attributes that are completely out of scope and not required to satisfy or validate rules R1–R4. | Out of scope section | Removed `email`, `capacity`, and `name` attributes from the model to keep the classes lean and precise. |
 
 ---
 
