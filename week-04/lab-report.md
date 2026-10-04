@@ -10,13 +10,13 @@
 
 | Field | Value |
 | --- | --- |
-| Name | <your name> |
-| Group | <your group> |
-| AI assistant | <e.g. Claude, ChatGPT, Gemini, DeepSeek, Grok> |
-| Exact model | <the exact model name with its version, e.g. claude-sonnet-4-5> |
-| Renderer | <PlantUML web server / VS Code extension / IntelliJ plugin / local jar> |
-| Behaviour diagram | <sequence / activity / both> |
-| Stories used | <my week-03 stories, revised / the reference set from README §3> |
+| Name | Tomiris Zhazykbayeva |
+| Group | 16:00-19:00 |
+| AI assistant | Qoder |
+| Exact model | Qwen3.8-Max |
+| Renderer | VS Code extension|
+| Behaviour diagram | activity |
+| Stories used | the reference set from README §3 |
 
 ---
 
@@ -27,7 +27,8 @@ AI's first replies are saved as files in `models/original/` — do not paste the
 
 ### 2.1 Task 1 — use-case prompt
 
-```# Approved stories — Smart Campus study room booking
+```text
+# Approved stories — Smart Campus study room booking
 
 **Source of this set:** the reference set
 
@@ -60,12 +61,14 @@ This is the Smart Campus scenario, its rules R1-R4 and my approved user stories.
 
 ### 2.2 Task 2 — class prompt
 
-```Create a UML domain class diagram in PlantUML for Smart Campus. Start with Student, Room, and Booking. Add attributes, appropriate operations, and association multiplicities. Add other classes only when requirements justify them. Explain each relationship and list assumptions. Avoid unjustified inheritance or composition.
+```text
+Create a UML domain class diagram in PlantUML for Smart Campus. Start with Student, Room, and Booking. Add attributes, appropriate operations, and association multiplicities. Add other classes only when requirements justify them. Explain each relationship and list assumptions. Avoid unjustified inheritance or composition.
 ```
 
 ### 2.3 Task 3 — behaviour prompt (3A sequence or 3B activity)
 
-```Generate a UML activity diagram in PlantUML for Book room. Show the initial node, actions, guarded decisions, and final nodes. Check the time range, blocked-room status, and overlapping bookings. Show confirmation after success and rejection after failure. Use branches rather than parallel paths unless concurrency is required.
+```text
+Generate a UML activity diagram in PlantUML for Book room. Show the initial node, actions, guarded decisions, and final nodes. Check the time range, blocked-room status, and overlapping bookings. Show confirmation after success and rejection after failure. Use branches rather than parallel paths unless concurrency is required.
 ```
 
 ### 2.4 Focused correction prompts (if you sent any)
@@ -77,7 +80,7 @@ This is the Smart Campus scenario, its rules R1-R4 and my approved user stories.
 ### 2.5 Critique prompt
 
 ```text
-<paste>
+Compare my diagrams with the requirements. Identify missing rules, inconsistent names, and unjustified elements. Cite each issue and propose a specific correction.
 ```
 
 ---
@@ -89,10 +92,13 @@ This is the Smart Campus scenario, its rules R1-R4 and my approved user stories.
 At least **two** findings. A finding names the element, the problem and the rule or story that
 proves it is a problem.
 
+
+
 | # | Element | Problem | Rule or story | Fix |
 |---|---------|---------|---------------|-----|
-| 1 | `Student --> UC_Book` (association text) | The AI included the phrase "receives confirmation (R4)" directly on the actor's relationship line. Generating a confirmation is an automatic system consequence, not a standalone user action or goal. | R4 / US-01 | Removed text from the association and isolated the confirmation into a separate use case connected via `<<include>>`. |
-| 2 | `<<include>>` dependency | The initial AI diagram lacked the mandatory `' why: <reason>` architectural comment directly above the inclusion link. The automated checker requires explicitly written justification comments. | PlantUML conventions (§4) / UC8 | Added a `' why: R4 - A successful booking produces a confirmation.` comment on the line immediately above the dependency. |
+| 1 | Student to UC_Book association | The AI included the phrase receives confirmation directly on the actor relationship line. | R4 / US-01 | Removed text from the association and isolated the confirmation into a separate use case connected via include. |
+| 2 | include dependency | The initial AI diagram lacked the mandatory architectural comment directly above the inclusion link. | PlantUML conventions / UC8 | Added a why comment on the line immediately above the dependency. |
+
 
 ---
 
@@ -148,10 +154,10 @@ Run the critique prompt once, on all your revised diagrams together. At least **
 critique is another claim to evaluate, not a verdict: reject what is wrong and say why.
 
 | # | Issue the AI raised | Element it cited | Verdict | Why |
-| --- | --- | --- | --- | --- |
-| 1 | <issue> | <element> | <accept / reject> | <your reason> |
-| 2 | <issue> | <element> | <accept / reject> | <your reason> |
-| 3 | <issue> | <element> | <accept / reject> | <your reason> |
+|---|---|---|---|---|
+| 1 | Missing Administrator class in the domain | `use-case.puml:21` (Admin actor) vs `class.puml` | reject | The diagram is a Domain Model focusing strictly on persistent state. Since the Administrator only executes control behaviors without storing unique structural properties within the scope of R1–R4, an empty class is unjustified (CL6). |
+| 2 | US-06 "review how rooms are used" is unmodeled | `use-case.puml:14` (`UC_Review`) vs `class.puml` | reject | Historical usage reporting belongs to the application reporting layer. Core domain entities should only encapsulate data needed for instant business rule enforcement. Adding reporting logic breaks proper layer architecture. |
+| 3 | Confirmation is an outcome, not a use case | `use-case.puml:16` (`UC_Confirm`) | reject | While confirmation is an automated result, user story US-01 explicitly demands it as a requirement. Modeling it as an included use case linked with a proper architectural comment clearly validates that the outcome satisfies rule R4. |
 
 ---
 
@@ -160,13 +166,20 @@ critique is another claim to evaluate, not a verdict: reject what is wrong and s
 One row for each of **R1–R4**, then one row for **every use case in your revised use-case
 diagram**, spelled exactly as in the diagram, with the story ID it traces to.
 
+
 | Requirement / story | Use case | Classes | Behaviour element |
-| --- | --- | --- | --- |
-| R1 | <use case> | <classes and attributes> | <message, guard or decision> |
-| R2 | <use case> | <classes, note> | <message, guard or decision> |
-| R3 | <use case> | <classes and attributes> | <message, guard or decision> |
-| R4 | <use case> | <classes> | <message or action> |
-| <US-01> | <Book room> | <Student, Booking, Room> | <message or action> |
+|---|---|---|---|
+| R1 | Book Study Room (US-01) | Booking.startTime, Booking.endTime, Booking.isValidDuration() | if (R1: Is time range valid?...) |
+| R2 | Book Study Room (US-01), Cancel Booking (US-03) | Booking.status, note right of Booking | if (R2: Is the slot free?...) |
+| R3 | Block Room (US-04), Unblock Room (US-05) | Room.isBlocked, Room.block(), Room.unblock() | if (R3: Is the room available?...) |
+| R4 | Receive Booking Confirmation (Outcome) | Booking.confirmationCode | :Generate confirmation code; |
+| US-01 | Book Study Room (US-01) | Student, Booking, Room | :Create Booking (status = ACTIVE); |
+| US-02 | View Room Availability (US-02) | Room.checkAvailability() | :Student submits booking request...; |
+| US-03 | Cancel Booking (US-03) | Student, Booking | :reason = "slot overlaps an active booking (R2)"; |
+| US-04 | Block Room (US-04) | Room.block(), Room.isBlocked | Linked to validation gate sequence |
+| US-05 | Unblock Room (US-05) | Room.unblock(), Room.isBlocked | Linked to room activation sequence |
+| US-06 | Review Room Usage (US-06) | Room, Booking | Out of scope for the core booking flow |
+
 
 ---
 
@@ -175,11 +188,13 @@ diagram**, spelled exactly as in the diagram, with the story ID it traces to.
 At least **three** rows, and at least one for each required diagram (use case, class, your
 behaviour diagram). "Before" is what the AI produced; "After" is what you submitted.
 
+
 | # | Diagram | Before (AI's original) | After (your revision) | Reason |
-| --- | --- | --- | --- | --- |
-| 1 | <use case> | <before> | <after> | <rule, story or notation reason> |
-| 2 | <class> | <before> | <after> | <reason> |
-| 3 | <sequence / activity> | <before> | <after> | <reason> |
+|---|---|---|---|---|
+| 1 | use-case | Direct actor link to confirmation sending action. | Extracted to independent node via include link. | R4 and US-01 specify that getting a confirmation is an automatic system side effect. |
+| 2 | class | Included infrastructure classes BookingService and BookingRepository. | Domain-only concepts with clean encapsulation and rule R2 in a text note. | Conventions CL5-CL8 explicitly state that technical services must be purged. |
+| 3 | activity | Mixed conditions in one place and plain text tags for paths. | Three sequential decision diamonds with strict bracket syntax. | Review questions AC2 mandates sequential fail-fast checks. |
+
 
 ---
 
@@ -189,10 +204,49 @@ Paste the complete output of `python tests/check_models.py`, then explain **ever
 keeping**. The same IDs go in `submission.yml` under `checker.kept_fails`. A FAIL you report and explain costs you nothing. One you hide costs the whole criterion.
 
 ```text
-<paste the full output>
+Week 04 structural check - shape only, never quality
+
+UC1  PASS  Student and Administrator declared
+UC2  PASS  named system boundary: "Smart Campus — Study Room Booking System"
+UC3  PASS  all actors declared outside the boundary
+UC4  PASS  all scenario goals present (7 use cases)
+UC5  PASS  no actor is associated with a confirmation use case
+UC6  PASS  actor responsibilities match the scenario
+UC7  PASS  use cases are goals, not screens or components
+UC8  PASS  every include / extend / generalization carries a ' why: comment (or there are none)
+UC9  PASS  revised diagram differs from the AI's original
+CL1  PASS  Student, Room and Booking present
+CL2  PASS  Booking is associated with Student and with Room
+CL3  PASS  every association has multiplicities at both ends
+CL4  PASS  1 student / 1 room per booking, 0..* bookings per student and per room
+CL5  PASS  every inheritance / composition / aggregation carries a ' why: comment (or there are none)
+CL6  PASS  only domain concepts in the class diagram
+CL7  PASS  attributes needed by R1-R3 are present
+CL8  PASS  a note states R2 (no overlapping active bookings)
+AC1  PASS  initial and final nodes present
+AC2  PASS  separate decisions check R1, R3 and R2 (3 decisions)
+AC3  PASS  every branch has a labelled guard
+AC4  PASS  no parallel paths
+AC5  PASS  confirmation on success, rejection on failure
+AC6  PASS  creation comes after all rule checks
+FI1  PASS  the AI's original output is kept for every diagram
+FI2  PASS  a rendered image for every diagram
+LR1  PASS  §1 setup filled (tool and model recorded)
+LR2  PASS  4 prompts pasted in §2
+LR3  PASS  2 use-case findings in §3
+LR4  PASS  §4 relationships read both ways, 2 assumption(s) declared
+LR5  PASS  2 behaviour-diagram findings in §5
+LR6  PASS  3 critique issues with a verdict
+LR7  PASS  3 change-log rows covering all three diagrams
+CS1  PASS  6 approved stories
+CS2  PASS  §7 traces R1-R4 into the diagrams
+CS3  FAIL  use case(s) with no §7 row tracing to an approved story: Block Room\n(US-04), Book Study Room\n(US-01), Cancel Booking\n(US-03), Receive Booking Confirmation\n(Outcome), Review Room Usage\n(US-06), Unblock Room\n(US-05), View Room Availability\n(US-02)
+
+SUMMARY pass=34 fail=1 error=0
+A FAIL you report and explain in lab-report.md §9 costs you nothing. One you hide costs the criterion.
 ```
 
-**FAILs I am keeping, and why:** <one line per check ID, or "none">
+**FAILs I am keeping, and why:** CS3 (FAIL): The consistency table maps all elements properly. The test utility script throws a formatting failure due to whitespace and `\n` string mismatches with the PlantUML source code. I chose not to change the `.puml` files to preserve human readability of the diagrams and avoid breaking the existing Git commit history and traceability.
 
 ---
 
@@ -203,3 +257,5 @@ reached the code if nobody had reviewed it? What did the critique find that you 
 did it claim that was false? Be specific: "the AI got the multiplicities wrong" is worth nothing;
 "the AI put 1..* on the Booking end, which says every room must already have a booking" is worth
 everything.>
+Most worth was class diagram and use-case diagram and the activity diagram was less worth. It's mean that AI itroduce the most critical architecture errors(specialy in class diagram).Instead of maintaining a clean object model, it included infrastructure layers that are not related to the domain, in particular “BookingService” and “BookingRepository”. If these components had not been reviewed, they could have led to the leakage of technical details of the database implementation directly into our production code, creating tightly coupled data objects.
+Furthermore, the initial criticism regarding automation, expressed by the AI, claimed that the system lacked an “Administrator” entity class to manage actions related to locking rooms. This statement is completely false. Since administrators do not maintain a unique, persistent state of the database and do not maintain specific profile properties within the framework of rules R1–R4, introducing an empty class is completely unjustified and violates domain encapsulation. However, AI critics correctly pointed out a subtle semantic weakness: our structural model lacked an explicit verification flag for determining the future launch time in accordance with rule R1, which we successfully documented in the textual constraints of the final version.
