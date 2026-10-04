@@ -1,0 +1,37 @@
+@startuml Smart Campus - Use Case Diagram (Revised)
+
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+' ===================== System boundary =====================
+rectangle "Smart Campus — Study Room Booking System" {
+  usecase "Book Study Room\n(US-01)"          as UC_Book
+  usecase "View Room Availability\n(US-02)"   as UC_View
+  usecase "Cancel Booking\n(US-03)"           as UC_Cancel
+  usecase "Block Room\n(US-04)"               as UC_Block
+  usecase "Unblock Room\n(US-05)"             as UC_Unblock
+  usecase "Review Room Usage\n(US-06)"        as UC_Review
+  
+  usecase "Receive Booking Confirmation\n(Outcome)" as UC_Confirm
+}
+
+' ===================== Actors (outside boundary) =====================
+actor "Student"       as Student
+actor "Administrator" as Admin
+
+' ===================== Student associations =====================
+Student --> UC_Book
+Student --> UC_View
+Student --> UC_Cancel
+
+' ===================== Administrator associations =====================
+Admin --> UC_Block
+Admin --> UC_Unblock
+Admin --> UC_Review
+
+' ===================== Dependencies =====================
+' why: R4 - A successful booking produces a confirmation.
+UC_Book ..> UC_Confirm : <<include>>
+
+@enduml

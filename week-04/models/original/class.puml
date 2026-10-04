@@ -1,0 +1,79 @@
+@startuml
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+' ========================= Entity classes =========================
+class Student {
+  studentId : String
+  name : String
+  email : String
+  --
+  bookRoom(room : Room, start : DateTime, end : DateTime) : Booking
+  cancelBooking(booking : Booking) : void
+  viewAvailableRooms(at : DateTime) : List<Room>
+}
+
+class Room {
+  roomId : String
+  name : String
+  capacity : Integer
+  status : RoomStatus
+  --
+  block() : void
+  unblock() : void
+  isBlocked() : boolean
+  isBookable(start : DateTime, end : DateTime) : boolean
+  hasActiveOverlap(start : DateTime, end : DateTime) : boolean
+  occupancyRate(from : DateTime, to : DateTime) : Real
+}
+
+class Booking {
+  bookingId : String
+  startTime : DateTime
+  endTime : DateTime
+  status : BookingStatus
+  confirmationCode : String
+  --
+  cancel() : void
+  isActive() : boolean
+  overlaps(other : Booking) : boolean
+  getDuration() : Integer
+}
+
+' ========================= Value types =========================
+enum RoomStatus {
+  AVAILABLE
+  BLOCKED
+}
+
+enum BookingStatus {
+  ACTIVE
+  CANCELLED
+}
+
+' ========================= Associations =========================
+Student "1" -- "0..*" Booking : places >
+Room    "1" -- "0..*" Booking : scheduled for >
+note on link
+  {R2} Among the Bookings of one Room, no two with
+  status = ACTIVE may overlap in time.
+end note
+
+Room    ..> RoomStatus
+Booking ..> BookingStatus
+
+' ========================= Constraints =========================
+note bottom of Booking
+  {R1} startTime is in the future and
+  0 < (endTime - startTime) <= 120 minutes.
+  --
+  {R4} confirmationCode is assigned when the
+  Booking is successfully created.
+end note
+
+note right of Room
+  {R3} isBookable() = false whenever status =
+  BLOCKED; a blocked Room accepts no new Booking.
+end note
+
+@enduml
