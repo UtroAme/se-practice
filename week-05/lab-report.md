@@ -1,8 +1,8 @@
 # Week 05 — Lab report
 
-**Name:**
-**Group:**
-**Date:**
+**Name:** Tomiris Zhazykbayeva
+**Group:** 16:00 - 19:00
+**Date:** 2026-10-09
 
 Fill in every section. **Do not delete, rename or renumber the headings** — the checker and the
 grader find your answers by them. Add rows to any table; never remove its header.
@@ -13,11 +13,11 @@ grader find your answers by them. Add rows to any table; never remove its header
 
 | | |
 | --- | --- |
-| Assistant (tool) | |
-| **Exact** model name | |
-| Language and version | |
-| Path | A / B |
-| My Week 04 declaration for touching bookings | allowed / not-allowed / did not submit |
+| Assistant (tool) | Qoder |
+| **Exact** model name | Qwen3.8-Max |
+| Language and version | Python 3.13 |
+| Path | A |
+| My Week 04 declaration for touching bookings | allowed |
 
 <!-- If your Week 04 model said touching bookings are NOT allowed: AC4 now says they are.
      One sentence here on what that changes in your Week 04 diagrams. This is a finding, not a penalty. -->
@@ -29,7 +29,43 @@ grader find your answers by them. Add rows to any table; never remove its header
 **The assistant's plan, pasted unedited:**
 
 ```text
-(paste here)
+No code yet — here's the plan.
+
+Check order (each returns False on failure)
+
+Well-formed interval (AC1a): 0  now — strict. A booking starting at the current minute is already late.
+Duration cap (AC2): end - start  now >= 0 always fails. Worth stating explicitly so it isn't mistaken for a bug.
+
+Boundary cases that expose wrong implementations
+
+AC1 — ordering and range
+start == end → False; start > end (e.g. 720, 600) → False
+start == -1 → False; end == 1441 → False
+end == 1440, start == 1320 → True (last legal slot of the day)
+start == now → False (catches >= instead of >)
+start == now + 1 → True
+
+AC2 — cap edges
+duration exactly 120 → True; 121 → False
+start == 1321, end == 1440 (119 min at day's end) → True
+
+AC3 — short-circuit trap
+blocked=True with an otherwise perfect, conflict-free slot → False (verifies the flag isn't skipped after the overlap check passes)
+
+AC4 — half-open semantics
+existing=[(600,720)], request (720,840) → True; request (480,600) → True
+request (599,601) → False; request (719,780) → False (one-minute clips on each side)
+request (630,690) — strictly inside → False
+request (590,710) — fully contains existing (600,660), duration 120 → False (catches implementations that only test endpoint intersection)
+existing=[(600,720),(720,840)], request (660,780) → False (adjacent bookings, no gap)
+existing=[(600,720),(780,900)], request (720,780) → True (fits exactly in the gap)
+many bookings where only the last overlaps → False (catches return True inside the loop)
+existing=[] → True
+
+AC5 — no side effects
+Assert existing is deep-equal to a pre-call snapshot, and that the same list object is passed out unchanged.
+
+Want me to implement it against these?
 ```
 
 **What the plan invented or changed.** One row for every rule in the plan that is not in the
@@ -38,11 +74,30 @@ row saying which lines of the plan you checked against which AC.
 
 | # | What the plan said | What the contract or the AC says | What I did |
 | --- | --- | --- | --- |
-| 1 | | | |
+| 1 | "Well-formed interval (AC1a): 0 < start <= ... now" | AC1 says 0 <= start < end <= 1440 — start = 0 is allowed | Told the assistant to use 0 <= start, matching AC1 exactly |
 
 **Boundary cases the assistant suggested that I kept as tests:**
 
--
+- start == end (700, 700) → False (AC1)
+- start > end (720, 700) → False (AC1)
+- start == -1 → False (AC1)
+- end == 1441 → False (AC1)
+- end == 1440, start == 1320 → True (AC1)
+- start == now → False (AC1)
+- start == now + 1 → True (AC1)
+- duration exactly 120 (720, 840) → True (AC2)
+- duration 121 (720, 841) → False (AC2)
+- blocked=True with a conflict-free slot → False (AC3)
+- touching at the end (720, 840) vs existing (600, 720) → True (AC4)
+- touching at the start (480, 600) vs existing (600, 720) → True (AC4)
+- one-minute clip on each side (599, 601) and (719, 780) → False (AC4)
+- strictly inside (630, 690) → False (AC4)
+- fully contains existing (590, 710) → False (AC4)
+- adjacent bookings (600, 720) + (720, 840), request (660, 780) → False (AC4)
+- fits exactly in a gap (600, 720) + (780, 900), request (720, 780) → True (AC4)
+- many bookings, only the last overlaps → False (AC4)
+- existing=[] → True (AC4 / contract)
+- existing deep-equal to a pre-call snapshot → unchanged (AC5)
 
 ---
 
