@@ -162,7 +162,8 @@ cause column says why no change was needed.
 
 | # | Input (the full call) | Expected | Actual | Cause (quote the line) | Fix | Who proposed the fix |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | | | | | | |
+| 1 | can_book(0, 60, 0, False, []) | False | False | No defect. v1 line 15 `if start <= now: return False` correctly rejects `start == now == 0`. This is the strict AC1 boundary. | none — v1 already correct | n/a |
+| 2 | can_book(1, 61, 0, False, []) | True | True | No defect. v1 line 15 `if start <= now: return False` correctly allows `start = now + 1`. This is the first legal start of the day. | none — v1 already correct | n/a |
 
 **The debug prompt I sent, and the assistant's answer** (leave the block empty if you did not use it):
 
@@ -190,7 +191,8 @@ cause column says why no change was needed.
 
 | # | What changed (the line, before → after) | Why | Evidence: the test or check that moved |
 | --- | --- | --- | --- |
-| 1 | | | |
+| 1 | no code change — v1 was already correct | v1 passed F1–F10 and all my tests; no fix was needed | F1–F10 PASS, S1–S2 PASS |
+| 2 | added tests: test_start_at_zero_now_zero_is_rejected, test_start_one_after_now_zero_is_allowed | To document the AC1 boundary at now = 0 | suite went from 20 to 22 tests, both pass |
 
 ---
 

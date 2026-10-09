@@ -76,3 +76,12 @@ class BookingTests(unittest.TestCase):
         snapshot = list(existing)
         can_book(610, 650, 540, False, existing)
         self.assertEqual(existing, snapshot)
+
+    #additional tests for 4 task
+    def test_start_at_zero_now_zero_is_rejected(self):
+        # AC1: start > now strictly. At now=0, start=0 must still be rejected.
+        self.assertIs(can_book(0, 60, 0, False, []), False)
+
+    def test_start_one_after_now_zero_is_allowed(self):
+        # AC1: start = now + 1 is the first legal start.
+        self.assertIs(can_book(1, 61, 0, False, []), True)
