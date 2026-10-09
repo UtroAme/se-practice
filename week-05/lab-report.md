@@ -177,13 +177,33 @@ cause column says why no change was needed.
 **The assistant's critique, pasted unedited:**
 
 ```text
-(paste here)
+Reviewed against the contract and AC1–AC5. No correctness defects. I found one minor, non-behavioral item — I'm not padding to five.
+
+Issue 1 — annotation is narrower than the contract (contract line: "existing contains valid (start, end) tuples")
+
+existing: Sequence[Tuple[int, int]],
+
+The contract specifies what existing contains, not that it is indexable. A set or frozenset of tuples is contract-legal and works correctly at runtime — the loop only iterates and unpacks — but fails static type checking under Sequence. This is the trade-off I introduced last turn to stop a generator being consumed; it buys generator-safety at the cost of rejecting other non-sequence collections. No effect on any return value. Flagging it because it's my change and it isn't free.
+
+What I checked and found clean
+
+AC1a — if not 0  now strictly. start == now rejected, start == now + 1 accepted.
+AC2 — if end - start > 120: is inclusive at the cap: 120 passes, 121 fails.
+AC3 — if blocked: rejects a blocked room before the scan.
+AC4 — if start < booked_end and booked_start < end: is the half-open intersection test. Strict on both sides, so (720, 840) against (600, 720) passes (touching allowed) while a one-minute clip on either end fails. It also catches containment in both directions, which endpoint-only tests miss.
+AC5, no false negatives — return True at booking.py:23 is reachable only after all four gates and a complete loop, so the last conflicting booking is still caught; the loop never returns True early.
+AC5, no false positives — every False path corresponds to a specific violated criterion.
+AC5, inputs unchanged — existing is iterated and unpacked only: no sort, append, or tuple write. No parameter is rebound or mutated. All paths return a bool literal.
+
+Correctly absent: validation of now, blocked, and the tuples in existing. The contract declares those valid, so checking them would exceed the stated scope.
+
+One caveat on method: this is a read-through against the spec, not an executed test run — the earlier verification was declined, so the boundary cases remain unexercised. Happy to run them if you want empirical confirmation.
 ```
 
 | # | Suggestion | accept / reject | Reason — cite the AC or the contract line | Suite after the change |
 | --- | --- | --- | --- | --- |
-| 1 | | accept / reject | | |
-| 2 | | accept / reject | | |
+| 1 | `Sequence[Tuple[int, int]]` is narrower than the contract | accept | Correct observation, but the task passes a `list`, which is a `Sequence`; AC4/AC5 say nothing about the collection type. Annotation unchanged. | 22 tests, OK (no change) |
+| 2 | "read-through, not an executed test run" | reject | Caveat about method, not a code issue. My suite exercises the boundaries: 22 tests, all green on v1. | 22 tests, OK (no change) |
 
 ---
 
