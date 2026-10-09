@@ -109,15 +109,19 @@ v1 is saved as `code/original/booking_v1.<ext>`, exactly as the assistant return
 
 | # | Line in v1 | AC it implements | Correct as written? If not, why |
 | --- | --- | --- | --- |
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
+| 1 | `if not 0 <= start < end <= 1440: return False` | AC1 | correct — matches the AC exactly |
+| 2 | `if start <= now: return False` | AC1 | correct — the AC requires `start > now`, so rejecting `start <= now` is equivalent |
+| 3 | `if end - start > 120: return False` | AC2 | correct — `at most 120` means 120 is allowed, 121 is not |
+| 4 | `if blocked: return False` | AC3 | correct |
+| 5 | `for booked_start, booked_end in existing: if start < booked_end and booked_start < end: return False` | AC4 | correct — the two strict comparisons are the standard half-open overlap test; touching endpoints are allowed because `start == booked_end` and `booked_start == end` do not satisfy either comparison |
+| 6 | `return True` (after the loop) | AC5 | correct — reached only when AC1–AC4 all passed; note it is **after** the loop, not inside it |
+| 7 | `return False` (in each check) | AC5 | correct |
+| 8 | No assignment to `existing` or to its elements anywhere in the function | AC5 / contract | correct — inputs are left unchanged |
 
 **Anything in v1 that no AC asks for** (extra validation, a buffer between bookings, logging,
 saving the booking, a different return type):
 
--
+- none. The `from typing import Sequence, Tuple` import and the type hints are documentation only; they do not add behaviour, and `Sequence[Tuple[int, int]]` is a supertype of the contract's "list of (start, end) tuples", so it does not narrow the signature.
 
 ---
 
@@ -127,17 +131,26 @@ Base input for every row unless the row says otherwise: `now=540, blocked=False,
 
 | # | Test name | Request (start, end) | What differs from the base input | Expected | AC | Result on v1 | Result on final |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | | | | | | | |
-| 2 | | | | | | | |
-| 3 | | | | | | | |
-| 4 | | | | | | | |
-| 5 | | | | | | | |
-| 6 | | | | | | | |
-| 7 | | | | | | | |
-| 8 | | | | | | | |
-| 9 | | | | | | | |
-| 10 | | | | | | | |
-| 11 | | | | | | | |
+| 1 | touching_end_is_allowed | (660, 720) | — | True | AC4 | pass | pass |
+| 2 | overlap_is_rejected | (630, 690) | — | False | AC4 | pass | pass |
+| 3 | blocked_room_is_rejected | (660, 720) | blocked=True | False | AC3 | pass | pass |
+| 4 | exactly_two_hours_is_allowed | (720, 840) | — | True | AC2 | pass | pass |
+| 5 | over_two_hours_is_rejected | (720, 841) | — | False | AC2 | pass | pass |
+| 6 | starting_now_is_rejected | (540, 570) | — | False | AC1 | pass | pass |
+| 7 | zero_length_is_rejected | (700, 700) | — | False | AC1 | pass | pass |
+| 8 | reversed_times_are_rejected | (720, 700) | — | False | AC1 | pass | pass |
+| 9 | ends_exactly_at_end_of_day_is_allowed | (1380, 1440) | — | True | AC1 | pass | pass |
+| 10 | ends_after_end_of_day_is_rejected | (1380, 1441) | — | False | AC1 | pass | pass |
+| 11 | empty_existing_is_allowed | (660, 720) | existing=[] | True | AC4 | pass | pass |
+| 12 | fully_contains_existing_is_rejected | (590, 710) | — | False | AC4 | pass | pass |
+| 13 | touching_start_of_existing_is_allowed | (570, 600) | — | True | AC4 | pass | pass |
+| 14 | existing_is_not_mutated | (660, 720) | — | True / existing unchanged | AC5 | pass | pass |
+| 15 | overlap_with_second_booking_is_rejected | (700, 760) | existing=[(600, 660), (700, 750)] | False | AC4 | pass | pass |
+| 16 | overlap_with_last_of_three_is_rejected | (800, 860) | existing=[(600, 660), (700, 760), (800, 850)] | False | AC4 | pass | pass |
+| 17 | overlap_in_unsorted_existing_is_rejected | (610, 650) | existing=[(900, 960), (600, 660)] | False | AC4 | pass | pass |
+| 18 | result_is_a_real_bool_true | (660, 720) | — | True (and type is bool) | AC5 | pass | pass |
+| 19 | result_is_a_real_bool_false | (630, 690) | — | False (and type is bool) | AC5 | pass | pass |
+| 20 | existing_is_not_mutated_on_rejection | (610, 650) | existing has 3 bookings | False / existing unchanged | AC5 | pass | pass |
 
 ---
 
