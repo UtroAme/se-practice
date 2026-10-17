@@ -1,3 +1,69 @@
 ' SIS #02 — your FINAL sequence diagram goes here, as PlantUML (@startuml … @enduml).
 ' Start from the AI's original in models/original/sequence.puml, apply your accepted review
 ' decisions, then render it to models/img/sequence.png (or .svg). README section 5.
+@startuml
+title Course Registration — browse, guarded success, full and duplicate outcomes
+autonumber
+
+actor Student as S
+participant "Catalog View" as UI
+participant "Registration Service" as RS
+entity "CourseOffering" as CO
+entity "Enrollment" as EN
+
+== US-01: Browse offerings (R1, AC-01) ==
+S -> UI : view catalog(semester)
+activate UI
+UI -> CO : query offerings(semester)
+activate CO
+CO --> UI : offerings with courseCode, title,\nofferingId, availablePlaces
+deactivate CO
+UI --> S : catalog listing(courseCode, title,\nofferingId, availablePlaces)
+deactivate UI
+note over S, CO
+  AC-02 (R2): browsing reserves nothing.
+  availablePlaces is a derived value,
+  rechecked only at registration time.
+end note
+
+== US-02 / US-03: Request registration (R2–R5) ==
+S -> RS : register(student, offeringId)
+activate RS
+RS -> CO : checkAndEnroll(student, offeringId)  «one transaction»
+activate CO
+
+group atomic transaction - final checks and creation are one step
+  CO -> EN : findEnrollment(student, offeringId)
+  activate EN
+  EN --> CO : existing | none
+  deactivate EN
+  alt already enrolled
+    CO --> RS : REJECTED("already enrolled")
+    RS --> S : rejection "already enrolled", count unchanged (R5)
+  else course full
+    CO --> RS : REJECTED("course full")
+    RS --> S : rejection "course full", count unchanged (R5)
+  else not enrolled and places left
+    CO -> EN : create Enrollment(student, offeringId)
+    activate EN
+    EN --> CO : enrollment
+    deactivate EN
+    CO -> CO : countEnrollments increases by 1
+    CO --> RS : CONFIRMED(enrollment)
+    RS --> S : confirmation with enrollment details (R4)
+  end
+end
+
+note over CO
+  Atomic mechanism: the duplicate check,
+  the capacity check, the decrement of
+  availablePlaces, and the Enrollment
+  creation run in one atomic transaction
+  (row lock on the offering, or conditional
+  update), so two concurrent requests for
+  the last place cannot both succeed.
+end note
+
+deactivate CO
+deactivate RS
+@enduml
