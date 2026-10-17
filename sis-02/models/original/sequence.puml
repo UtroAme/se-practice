@@ -1,0 +1,52 @@
+@startuml
+title Course Registration — browse, guarded success, full and duplicate outcomes
+autonumber
+
+actor Student as S
+participant "Catalog View" as UI <<technical: UI / boundary>>
+participant "Registration Service" as RS <<technical: application service>>
+entity "CourseOffering" as CO
+entity "Enrollment" as EN
+
+== US-01: Browse offerings (R1, AC-01) ==
+S -> UI : view catalog(semester)
+activate UI
+UI -> CO : query offerings(semester)
+activate CO
+CO --> UI : offerings with courseCode, title,\nofferingId, availablePlaces
+deactivate CO
+UI --> S : catalog listing
+deactivate UI
+note over S, CO
+  AC-02 (R2): browsing reserves nothing.
+  availablePlaces is unchanged and is
+  rechecked only at registration time.
+end note
+
+== US-02 / US-03: Request registration (R2–R5) ==
+S -> RS : register(student, offering)
+activate RS
+RS -> CO : checkAndEnroll(student)  «one transaction»
+activate CO
+
+critical Final checks and creation are atomic (last place cannot be double-taken)
+  alt student already has an Enrollment in this offering (R3, AC-06)
+    CO --> RS : REJECTED("already enrolled")
+    RS --> S : rejection "already enrolled"\nno Enrollment created, count unchanged (R5)
+  else availablePlaces == 0 (R2, AC-04, AC-05)
+    CO --> RS : REJECTED("course full")
+    RS --> S : rejection "course full"\nno Enrollment created, count unchanged (R5)
+  else place free and not enrolled (R4, AC-03)
+    CO -> EN : create Enrollment(student, offering)
+    activate EN
+    EN --> CO : enrollment
+    deactivate EN
+    CO -> CO : availablePlaces := availablePlaces - 1
+    CO --> RS : CONFIRMED(enrollment)
+    RS --> S : confirmation with enrollment details (R4)
+  end
+end
+
+deactivate CO
+deactivate RS
+@enduml

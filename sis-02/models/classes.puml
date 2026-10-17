@@ -1,0 +1,49 @@
+' SIS #02 — your FINAL class diagram goes here, as PlantUML (@startuml … @enduml).
+' The file is classes.puml (plural), not class.puml as in Week 04.
+' Start from the AI's original in models/original/classes.puml, apply your accepted review
+' decisions, then render it to models/img/classes.png (or .svg). README section 6.
+@startuml
+title Domain class diagram — course registration
+
+class Student {
+  studentId : ID
+  name : String
+}
+
+class Course {
+  courseCode : String
+  title : String
+}
+
+class CourseOffering {
+  offeringId : ID
+  semester : String
+  capacity : Integer
+  availablePlaces() : Integer «derived»
+}
+
+class Enrollment {
+  enrollmentId : ID
+  enrolledAt : Timestamp
+}
+
+Course "1" -- "0..*" CourseOffering : describes
+Student "1" -- "0..*" Enrollment : holds
+CourseOffering "1" -- "0..*" Enrollment : fills places of
+
+note bottom of CourseOffering
+  Capacity constraint (R2):
+  capacity is a positive whole number (greater than 0);
+  enrollment count is between 0 and capacity inclusive;
+  availablePlaces() = capacity - enrollment count.
+end note
+
+note bottom of Enrollment
+  Uniqueness constraint (R3):
+  at most one Enrollment per
+  (Student, CourseOffering) pair -
+  a repeat request is rejected.
+  Enrollment is the only association
+  between Student and CourseOffering.
+end note
+@enduml
