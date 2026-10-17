@@ -1,0 +1,50 @@
+@startuml
+title Domain class diagram — course registration
+
+class Student {
+  studentId : ID
+  name : String
+}
+
+class Course {
+  courseCode : String
+  title : String
+}
+
+class Semester {
+  term : String
+  year : Integer
+}
+
+class CourseOffering {
+  offeringId : ID
+  capacity : Integer
+  availablePlaces() : Integer «derived»
+}
+
+class Enrollment {
+  enrollmentId : ID
+  enrolledAt : Timestamp
+}
+
+Course "1" -- "0..*" CourseOffering : describes >
+Semester "1" -- "0..*" CourseOffering : scheduled in >
+Student "1" -- "0..*" Enrollment : holds >
+CourseOffering "1" -- "0..*" Enrollment : fills places of >
+
+note bottom of CourseOffering
+  Capacity constraint (R2):
+  capacity is a positive whole number (> 0);
+  enrollments.size() <= capacity always;
+  availablePlaces = capacity - enrollments.size() >= 0.
+end note
+
+note bottom of Enrollment
+  Uniqueness constraint (R3):
+  at most one Enrollment per
+  (Student, CourseOffering) pair —
+  a repeat request is rejected.
+  Enrollment is the only association
+  between Student and CourseOffering.
+end note
+@enduml
