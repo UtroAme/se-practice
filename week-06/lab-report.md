@@ -15,7 +15,7 @@ grader find your answers by them. Add rows to any table; never remove its header
 | --- | --- |
 | Tool | Bolt.new |
 | Exact model (as Bolt shows it, or `not displayed`) | GLM 5.3 Flash |
-| Bolt project link (or `not shared`, and why) | |
+| Bolt project link (or `not shared`, and why) | not-shared |
 | Browser and version | Google Chrome 155.0.8059.84 |
 | If you could not use Bolt.new: the tool you used instead, and why | |
 
@@ -28,14 +28,14 @@ Fill the first three columns now; fill the last one after Task 3.
 
 | # | What I expect to go wrong | AC it concerns | Was I right? (after Task 3) |
 | --- | --- | --- | --- |
-| 1 | | | |
-| 2 | | | |
+| 1 | The AI will miss the input for "current time", so I won't be able to test cases like T6 (starts now) or T3 (blocked room). | AC1, AC3 | |
+| 2 | The "Check" button will accidentally add the checked time to the existing bookings, so checking the same time twice will fail. | AC5 | |
 
 **The initial prompt exactly as I sent it** — the deck's prompt with AC1–AC6 pasted in place of
 `[paste AC1–AC6]`, nothing else changed:
 
 ```text
-(paste here)
+Build a small responsive Smart Campus Room Availability Checker. Requirements: AC1: Accept a candidate interval only when 0 ≤ start < end ≤ 1440 and start is after the supplied current time. AC2: Reject a booking longer than 120 minutes. AC3: Reject the request when the selected room is blocked. AC4: Reject any interval that overlaps an existing booking; touching endpoints are allowed. AC5: Show a clear Available / Unavailable decision without changing the existing booking data. AC6: The page remains usable at desktop and narrow/mobile width and gives understandable validation feedback. Use fictional sample data only. Keep the implementation simple and within one-page scope. Do not add authentication, backend services, analytics, or unrelated features. After building, briefly list the main files/components you created.
 ```
 
 ---
@@ -48,12 +48,20 @@ prompt: yes / no
 **Bolt's list of the files/components it created, pasted unedited:**
 
 ```text
-(paste here)
+Main files created:
+
+src/lib/availability.ts — fictional sample rooms/bookings, minutes-of-day helpers, and the checkAvailability validator covering all rules (0 ≤ start < end ≤ 1440, start after current time, ≤ 120 min, blocked-room rejection, overlap check with touching endpoints allowed, read-only data)
+
+src/App.tsx — the one-page responsive UI: room/time form, clear Available/Unavailable verdict with a reason, and a schedule overview of all rooms (past bookings shown struck-through)
 ```
 
 **What v1 does — one line per thing that works, or visibly does not:**
 
--
+- Form for room and time selection works.
+
+- Shows Available/Unavailable decision.
+
+- Fails: Current time is hardcoded to 13:00, no way to change it or block a room.
 
 **Repair prompt** (only if the first build did not run — the deck allows one, then the result is
 v1). Leave empty if you did not need it:
