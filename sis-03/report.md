@@ -14,7 +14,7 @@
 | Item | Value |
 | --- | --- |
 | Coding assistant (tool) | Qoder |
-| Coding assistant model | Qwen3.8-Max |
+| Coding assistant model | Qwen3.8-Flash |
 | Bolt.new model | not displayed |
 | Bolt project link | not-shared |
 | Language | python |
@@ -80,10 +80,12 @@
 
 | Branch in v1 (quoted) | AC | Satisfies it? | Why |
 | --- | --- | --- | --- |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) | (write here) |
+| `if not 0 <= start < end <= 1440:` | AC1 | Yes | Correctly rejects reversed times (T7) and times past midnight (T9). |
+| `if start <= now:` | AC1 | Yes | Correctly rejects a start time that is equal to now (T6). |
+| `if end - start > 120:` | AC2 | Yes | Allows exactly 120 minutes (T4) and rejects 121 minutes (T5). |
+| `if blocked:` | AC3 | Yes | Rejects every request when the room is blocked (T3). |
+| `if s < end and start < e:` | AC4 | Yes | Correctly uses strict inequality `<`. This means touching endpoints (T1) are allowed. |
+| No `.sort()` or modification of `existing` | AC5 | Yes | The list is only read in the loop, so it is not mutated. |
 
 ## 4. Prototype v1 in Bolt.new
 
@@ -117,17 +119,17 @@
 
 | Case | Name | Input | Expected | Python v1 | Python final | Page v1 | Page final |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| T1 | Touching | 660–720 | Available | | | | |
-| T2 | Overlap | 630–690 | Unavailable | | | | |
-| T3 | Blocked | 660–720, blocked | Unavailable | | | | |
-| T4 | Exactly 120 min | 720–840 | Available | | | | |
-| T5 | 121 min | 720–841 | Unavailable | | | | |
-| T6 | Starts now | 540–570 | Unavailable | | | | |
-| T7 | Reversed | 720–660 | Unavailable | | | | |
-| T8 | Ends at midnight | 1380–1440 | Available | | | | |
-| T9 | Past midnight | 1380–1441 | Unavailable | | | | |
-| T10 | Second booking | 720–780, existing (600–660), (700–760) | Unavailable | | | | |
-| T11 | Same check twice | 660–720, twice | Available | | | | |
+| T1 | Touching | 660–720 | Available | True | True | | |
+| T2 | Overlap | 630–690 | Unavailable | False | False | | |
+| T3 | Blocked | 660–720, blocked | Unavailable | False | False | | |
+| T4 | Exactly 120 min | 720–840 | Available | True | True | | |
+| T5 | 121 min | 720–841 | Unavailable | False | False | | |
+| T6 | Starts now | 540–570 | Unavailable | False | False | | |
+| T7 | Reversed | 720–660 | Unavailable | False | False | | |
+| T8 | Ends at midnight | 1380–1440 | Available | True | True | | |
+| T9 | Past midnight | 1380–1441 | Unavailable | False | False | | |
+| T10 | Second booking | 720–780, existing (600–660), (700–760) | Unavailable | False | False | | |
+| T11 | Same check twice | 660–720, twice | Available | True | True | | |
 | T12 | Narrow screen | T1 at ~375 px wide | Available | n/a | n/a | | |
 
 ## 6. Traceability
@@ -137,12 +139,12 @@
 
 | AC | Implementation / file | Test input | Expected | v1 actual | Final actual |
 | --- | --- | --- | --- | --- | --- |
-| AC1 | (write here) | (write here) | (write here) | (write here) | (write here) |
-| AC2 | (write here) | (write here) | (write here) | (write here) | (write here) |
-| AC3 | (write here) | (write here) | (write here) | (write here) | (write here) |
-| AC4 | (write here) | (write here) | (write here) | (write here) | (write here) |
-| AC5 | (write here) | (write here) | (write here) | (write here) | (write here) |
-| AC6 | (write here) | (write here) | (write here) | (write here) | (write here) |
+| AC1 | booking.py L5-L10 | T6, T7, T8, T9 | Unavailable, Unavailable, Available, Unavailable | False, False, True, False | False, False, True, False |
+| AC2 | booking.py L12-L13 | T4, T5 | Available, Unavailable | True, False | True, False |
+| AC3 | booking.py L14-L15 | T3 | Unavailable | False | False |
+| AC4 | booking.py L17-L21 | T1, T2, T10 | Available, Unavailable, Unavailable | True, False, False | True, False, False |
+| AC5 | booking.py (no sort) | T11 | Available | True | True |
+| AC6 | App.tsx / UI inputs | T12 | Available | Usable | Usable |
 
 ## 7. Issue log
 
@@ -166,9 +168,9 @@
 
 | # | AI claim or recommendation | How I verified it | Decision | Reason (AC or case) |
 | --- | --- | --- | --- | --- |
-| 1 | (write here) | (write here) | (write here) | (write here) |
-| 2 | (write here) | (write here) | (write here) | (write here) |
-| 3 | (write here) | (write here) | (write here) | (write here) |
+| 1 | "The overlap condition `s < end and start < e` is correct." | Ran T1 (660-720) and T2 (630-690). | Accept | Strict inequalities correctly allow touching endpoints (T1) and reject overlap (T2). |
+| 2 | "Add a 15-minute cleaning buffer between bookings." | Checked the assignment brief. | Reject | Nothing in AC1-AC6 mentions a buffer. Adding it changes the fixed criteria. |
+| 3 | "I added a `try/except` block and type checking." | Ran the tests. | Modify | The tests pass, but the contract only requires AC1-AC4 checks. I removed it to keep the final code minimal. |
 
 ## 9. Coding-agent analysis
 
@@ -223,42 +225,207 @@
 
 ### B1
 
-- **Tool:** (write here)
-- **Model:** (write here)
-- **Date:** (write here)
-- **Stage:** (write here)
-- **Source:** (write here)
+- **Tool:** Qoder
+- **Model:** Qwen3.8-Flash
+- **Date:** 2026-11-01
+- **Stage:** Plan
+- **Source:** SIS-03
 
 **Prompt:**
 
 ~~~~text
-(paste here)
+I am building can_book(start, end, now, blocked, existing) -> bool for a room availability checker. The acceptance criteria are:
+AC1: integer minutes 0 <= start < end <= 1440, start strictly after now.
+AC2: duration <= 120; exactly 120 allowed.
+AC3: reject every request when blocked is True.
+AC4: reject overlap with any (s,e) in existing; touching endpoints do NOT overlap.
+AC5: return a real bool and never mutate existing.
+Before writing code, give me a short plan: which checks you will write, in what order, which boundary cases you will cover, and which assumptions you make. Standard library only.
 ~~~~
 
 **Response:**
 
 ~~~~text
-(paste here)
+Empty directory — so this is greenfield. Here's the plan before I write anything.
+
+Check order (all failures return False; no exceptions)
+
+Argument sanity — reject non-integers up front. Note the trap: isinstance(True, int) is True, so I explicitly reject bool values where an integer minute is expected.
+AC1 range — 0  now. Validity gate first, because AC2/AC4 are meaningless on an incoherent request.
+AC3 blocked — if blocked: return False. Ordered after validation only for readability; since both branches return False, the result is identical either way. Truthiness test, so blocked=1 also rejects.
+AC2 duration — end - start  start so no negative-length special case.
+AC4 overlap — iterate existing, treat intervals as half-open [s, e), reject when s  now and do not bound now itself beyond accepting it.
+Invalid input returns False rather than raising. If you'd rather have ValueError on malformed arguments, say so — it changes step 1 and 2 only.
+existing items are (s, e) pairs assumed already ordered (s <= e); I do not swap or normalize them, since that would risk mutating caller data.
+blocked is one global flag for the room, not per-interval.
+Intervals are half-open, which is what makes AC4's "touching does not overlap" fall out naturally.
+Tests will use stdlib unittest, no third-party deps, per "standard library only".
+
+Want me to write can_book.py plus the test file in this directory on that basis, or adjust any assumption first?
 ~~~~
 
 ### B2
 
-- **Tool:** (write here)
-- **Model:** (write here)
-- **Date:** (write here)
-- **Stage:** (write here)
-- **Source:** (write here)
+- **Tool:** Qoder
+- **Model:** Qwen3.8-Flash
+- **Date:** 2026-11-01
+- **Stage:** Generate 
+- **Source:** SIS-03
 
 **Prompt:**
 
 ~~~~text
-(paste here)
+Now write can_book following the plan. Standard library only. Keep the signature exactly can_book(start, end, now, blocked, existing). Return True only when AC1-AC5 hold, False otherwise. Do not mutate existing. No prints, no extra arguments.
 ~~~~
 
 **Response:**
 
 ~~~~text
-(paste here)
+Writing the module and its test suite.
+
+import copy
+import unittest
+
+def _is_minute(value):
+    return isinstance(value, int) and not isinstance(value, bool)
+
+def can_book(start, end, now, blocked, existing):
+    if not (_is_minute(start) and _is_minute(end) and _is_minute(now)):
+        return False
+    if not 0 <= start < end <= 1440:
+        return False
+    if start <= now:
+        return False
+    if blocked:
+        return False
+    if end - start > 120:
+        return False
+
+    try:
+        for s, e in existing:
+            if s < end and start < e:
+                return False
+    except (TypeError, ValueError):
+        return False
+    return True
+
+# ... дальше идет код тестов ...
+
+Collapse changes for test_can_book.py
+
+test_can_book.py
++101
+-0
+
+import copy
+import unittest
+
+from can_book import can_book
+
+
+class CanBookTest(unittest.TestCase):
+    def call(self, start, end, now, blocked, existing):
+        before = copy.deepcopy(existing)
+        result = can_book(start, end, now, blocked, existing)
+        self.assertIs(type(result), bool)
+        self.assertEqual(existing, before)
+        self.assertEqual([id(item) for item in existing], [id(item) for item in before])
+        return result
+
+    def ok(self, start, end, now=0, blocked=False, existing=()):
+        self.assertTrue(self.call(start, end, now, blocked, existing))
+
+    def no(self, start, end, now=0, blocked=False, existing=()):
+        self.assertFalse(self.call(start, end, now, blocked, existing))
+
+    def test_ac1_valid_request(self):
+        self.ok(540, 600, 0)
+
+    def test_ac1_start_must_be_strictly_after_now(self):
+        self.no(540, 600, 540)
+        self.ok(540, 600, 539)
+        self.no(540, 600, 541)
+
+    def test_ac1_lower_and_upper_bounds(self):
+        self.ok(0, 30, -1)
+        self.no(-1, 30, 0)
+        self.no(0, 1440, -1)
+        self.ok(1320, 1440, 0)
+        self.no(1400, 1441, 0)
+
+    def test_ac1_requires_start_before_end(self):
+        self.no(600, 600, 0)
+        self.no(600, 540, 0)
+
+    def test_ac2_duration_limit(self):
+        self.ok(0, 119, -1)
+        self.ok(0, 120, -1)
+        self.no(0, 121, -1)
+
+    def test_ac3_blocked_rejects_everything(self):
+        self.no(0, 60, -1, blocked=True)
+        self.no(1320, 1440, 0, blocked=True)
+        self.no(540, 600, 999, blocked=True)
+        self.no(0, 60, -1, blocked=1)
+
+    def test_ac4_touching_endpoints_do_not_overlap(self):
+        self.ok(60, 120, 0, existing=[(0, 60)])
+        self.ok(60, 120, 0, existing=[(120, 180)])
+        self.ok(60, 120, 0, existing=[(0, 60), (120, 180)])
+
+    def test_ac4_single_minute_overlap(self):
+        self.no(60, 120, 0, existing=[(59, 61)])
+        self.no(60, 120, 0, existing=[(119, 121)])
+
+    def test_ac4_containment_both_directions(self):
+        self.no(60, 120, 0, existing=[(30, 200)])
+        self.no(60, 120, 0, existing=[(80, 90)])
+        self.no(60, 120, 0, existing=[(60, 120)])
+
+    def test_ac4_zero_length_and_empty_existing(self):
+        self.ok(60, 120, 0, existing=[])
+        self.ok(60, 120, 0, existing=[(60, 60)])
+        self.ok(60, 120, 0, existing=[(90, 90)])
+
+    def test_ac5_never_mutates_existing(self):
+        existing = [(1000, 1020), (60, 120), (0, 30)]
+        snapshot = copy.deepcopy(existing)
+        self.assertFalse(self.call(540, 600, 0, False, existing))
+        self.assertEqual(existing, snapshot)
+
+    def test_ac5_never_mutates_existing_when_order_is_reversed(self):
+        existing = [(900, 960), (10, 20)]
+        snapshot = copy.deepcopy(existing)
+        self.assertTrue(self.call(540, 600, 0, False, existing))
+        self.assertEqual(existing, snapshot)
+
+    def test_non_integer_minutes_are_rejected(self):
+        self.no(True, 120, 0)
+        self.no(60, True, 0)
+        self.no(60.0, 120, 0)
+        self.no("60", 120, 0)
+        self.no(60, 120, None)
+
+    def test_malformed_existing_is_refused(self):
+        self.no(60, 120, 0, existing=None)
+        self.no(60, 120, 0, existing=[(1, 2, 3)])
+        self.no(60, 120, 0, existing=["ab"])
+        self.no(60, 120, 0, existing=[("x", "y")])
+
+    def test_blocked_is_checked_before_overlap(self):
+        self.no(60, 120, 0, blocked=True, existing=[(60, 120)])
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+I stopped short of running them — the test execution was declined, so the suite is written but unverified.
+
+can_book.py implements the plan in this order: integer/bool guard → AC1 (0  now) → AC3 blocked truthiness → AC2 end - start <= 120 → AC4 half-open overlap test s < end and start < e over a read-only loop. Signature is unchanged, return is always a literal True/False, stdlib only, no prints.
+
+test_can_book.py covers the boundary cases via a call() helper that asserts type(result) is bool and compares existing against a deepcopy (including tuple ids, so in-place reordering would be caught) after every invocation.
+
+To verify, run python -m unittest -v test_can_book in the project directory, or tell me if you'd rather review the code first.
 ~~~~
 
 ### B3
@@ -309,7 +476,26 @@
      code/ — the part ending in "Ran N tests" and OK or FAILED. -->
 
 ~~~~text
-(paste here)
+test_121_minutes_is_rejected (test_booking.BookingTests.test_121_minutes_is_rejected) ... ok
+test_blocked_room_rejects (test_booking.BookingTests.test_blocked_room_rejects) ... ok
+test_contains_existing_is_rejected (test_booking.BookingTests.test_contains_existing_is_rejected) ... ok
+test_ends_at_midnight_is_allowed (test_booking.BookingTests.test_ends_at_midnight_is_allowed) ... ok
+test_exactly_120_minutes_is_allowed (test_booking.BookingTests.test_exactly_120_minutes_is_allowed) ... ok
+test_inside_existing_is_rejected (test_booking.BookingTests.test_inside_existing_is_rejected) ... ok
+test_negative_start_is_rejected (test_booking.BookingTests.test_negative_start_is_rejected) ... ok
+test_overlap_is_rejected (test_booking.BookingTests.test_overlap_is_rejected) ... ok
+test_past_midnight_is_rejected (test_booking.BookingTests.test_past_midnight_is_rejected) ... ok
+test_reversed_times_are_rejected (test_booking.BookingTests.test_reversed_times_are_rejected) ... ok
+test_second_booking_is_rejected (test_booking.BookingTests.test_second_booking_is_rejected) ... ok
+test_start_at_now_is_rejected (test_booking.BookingTests.test_start_at_now_is_rejected) ... ok
+test_touching_end_is_allowed (test_booking.BookingTests.test_touching_end_is_allowed) ... ok
+test_unsorted_existing_is_checked (test_booking.BookingTests.test_unsorted_existing_is_checked) ... ok
+test_zero_length_is_rejected (test_booking.BookingTests.test_zero_length_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.001s
+
+OK
 ~~~~
 
 ### 12.2 Path B only — three faults you planted
