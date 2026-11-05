@@ -14,7 +14,7 @@ grader find your answers by them. You can add rows to any table, but never remov
 | | |
 | --- | --- |
 | Project I continue (`week-06` = my Week 06 Bolt project, `starter` = the provided starter) | starter |
-| Bolt project link (or `not shared`, and why) | not shared |
+| Bolt project link (or `not shared`, and why) | not shared — no Bolt project; the starter was used instead |
 | Assistant that generated the tests (tool) | |
 | Exact model (with its version, or `not displayed`) | |
 | Where I ran the tests (Bolt terminal / my computer / Codespace) | |
