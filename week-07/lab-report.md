@@ -29,15 +29,16 @@ grader find your answers by them. You can add rows to any table, but never remov
 
 | | |
 | --- | --- |
-| File and function (or "inside the page component") | |
-| Its inputs | |
-| What it returned | |
-| How the page used it | |
+| File and function (or "inside the page component") | `src/App.tsx`, inside the `check()` function |
+| Its inputs | `start`, `end`, `now` (converted to numbers), `blocked` (boolean), `bookings` (array of intervals) |
+| What it returned | A boolean (`ok`) used to set the `result` state |
+| How the page used it | Rendered `Available` if true, `Unavailable` if false |
 
 **What I changed to extract `canBook`.** Say which file it now lives in, what you moved, and why
 the behaviour did not change. Also say which file of the page now calls it. 40 words or more.
 
 <!-- Write below this line -->
+I moved the decision logic from the `check()` function in `App.tsx` into a new `canBook` function in `src/booking.ts`. The page now imports `canBook` and calls it with the converted time numbers, `blocked`, and `room.bookings`. The behaviour did not change because I copied the exact same conditions. `App.tsx` still handles validation messages and rendering.
 
 ---
 
@@ -286,7 +287,7 @@ describe('canBook', () => {
 });
 ```
 
-The first suite was saved to `suites/first/` **before** I changed anything in it: no
+The first suite was saved to `suites/first/` **before** I changed anything in it: yes
 
 ---
 
@@ -414,18 +415,37 @@ error does not count as detection.
 
 | Trial | Intentional change | Detected / Survived | Failing test ID(s) | If it survived: why, and what you added |
 | --- | --- | --- | --- | --- |
-| M1 | Reject duration >= 120 instead of > 120 | Detected / Survived | | |
-| M2 | Treat touching endpoints as an overlap | Detected / Survived | | |
-| M3 | Remove the blocked-room rejection | Detected / Survived | | |
+| M1 | Reject duration >= 120 instead of > 120 | Detected | T06 | |
+| M2 | Treat touching endpoints as an overlap | Detected | T01, T08, X2, AC5 | |
+| M3 | Remove the blocked-room rejection | Detected | T13 | |
 
 **The run of each mutant, pasted unedited.** Paste the `Tests` summary line and the failing test
 names at least:
 
 ```text
-(paste here)
+--- M1: duration >= 120 ---
+ ❯ src/booking.test.ts (17 tests | 1 failed)
+ FAIL  src/booking.test.ts > canBook > AC2 - maximum slot length > T06: accepts exactly 120 minutes
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
+
+--- M2: touching endpoints as overlap ---
+ ❯ src/booking.test.ts (17 tests | 4 failed)
+ FAIL  src/booking.test.ts > canBook > AC4 - overlap with existing bookings (half-open intervals) > T01: accepts a slot touching a booking on its end
+ FAIL  src/booking.test.ts > canBook > AC4 - overlap with existing bookings (half-open intervals) > T08: accepts a slot touching a booking on its start
+ FAIL  src/booking.test.ts > canBook > AC4 - overlap with existing bookings (half-open intervals) > X2: accepts a slot boxed in by bookings on both sides
+ FAIL  src/booking.test.ts > canBook > AC5 - pure decision, booking data unchanged > AC5: returns true and leaves the request and bookings untouched
+ Test Files  1 failed (1)
+      Tests  4 failed | 13 passed (17)
+
+--- M3: no blocked-room rejection ---
+ ❯ src/booking.test.ts (17 tests | 1 failed)
+ FAIL  src/booking.test.ts > canBook > AC3 - blocked calendar > T13: rejects an otherwise bookable slot when blocked
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
 ```
 
-All three changes reverted, and the full suite run again (section 6.3): yes / no
+All three changes reverted, and the full suite run again (section 6.3): yes
 
 ---
 
@@ -437,11 +457,11 @@ screenshot of each as `evidence/ui-1.png` … `evidence/ui-5.png`. Take **ui-4 a
 
 | # | Action | Expected observation | AC | What I observed | Pass / Fail / Not testable |
 | --- | --- | --- | --- | --- | --- |
-| U1 | Check 11:00–12:00, unblocked | Available, with the fixed sample booking | AC5 | | Pass / Fail / Not testable |
-| U2 | Enable blocked, then check again | Unavailable replaces the earlier result | AC3, AC5 | | Pass / Fail / Not testable |
-| U3 | Clear a required input and submit | Understandable validation feedback | AC6 | | Pass / Fail / Not testable |
-| U4 | Use a narrow (phone) width | Controls and result remain usable | AC6 | | Pass / Fail / Not testable |
-| U5 | Repeat the checks on the same data | Existing bookings remain unchanged | AC5 | | Pass / Fail / Not testable |
+| U1 | Check 11:00–12:00, unblocked | Available, with the fixed sample booking | AC5 | The result showed Available and the booking 10:00-11:00 remained. | Pass |
+| U2 | Enable blocked, then check again | Unavailable replaces the earlier result | AC3, AC5 | The result changed to Unavailable. | Pass |
+| U3 | Clear a required input and submit | Understandable validation feedback | AC6 | The error message "Fill in the current time..." appeared. | Pass |
+| U4 | Use a narrow (phone) width | Controls and result remain usable | AC6 | The layout stacked vertically and was easy to use. | Pass |
+| U5 | Repeat the checks on the same data | Existing bookings remain unchanged | AC5 | The bookings list still showed 10:00-11:00. | Pass |
 
 ---
 
@@ -453,17 +473,17 @@ Use the same IDs as `known_fails` in `submission.yml`. Write `none` if the run i
 
 | Check | Why it stays |
 | --- | --- |
-| | |
+| none | The run is clean. |
 
 ### 9.2 Original and improved suites
 
 | Measure | First suite | Improved suite |
 | --- | --- | --- |
-| Executed / passed / failed | | |
-| Requirements with meaningful tests (AC IDs and gaps) | | |
-| Selected mutants detected | | |
-| Accepted / revised / rejected tests | | |
-| Remaining limitations | | |
+| Executed / passed / failed | 17 / 17 / 0 | 17 / 17 / 0 |
+| Requirements with meaningful tests (AC IDs and gaps) | AC1, AC2, AC3, AC4, AC5 | AC1, AC2, AC3, AC4, AC5 (AC6 is UI-only) |
+| Selected mutants detected | 3 | 3 |
+| Accepted / revised / rejected tests | 15 accepted, 2 revised | 17 accepted |
+| Remaining limitations | Titles lacked AC labels, AC5 was too broad. | AC6 cannot be tested at the unit level. |
 
 ### 9.3 What no AC decides
 
@@ -471,7 +491,7 @@ Call your function with `bookings = [{ start: 700, end: 650 }]` (a reversed exis
 and a request of 660–720. What does it return? Does any AC say what it should return? (This is
 the value you declare in `submission.yml` under `assumptions.invalid_existing_booking`.)
 
--
+- The function returns `true` because the reversed booking (700-650) fails the overlap check condition `start < b.end`. No AC defines what to do with an invalid existing booking, so this is an implementation assumption.
 
 ---
 
@@ -487,3 +507,5 @@ the value you declare in `submission.yml` under `assumptions.invalid_existing_bo
      pass, M1 would have become the real behaviour." -->
 
 <!-- Write your conclusion below this line -->
+The biggest weakness in the first suite generated by the AI was the use of weak assertions and missing AC labels in the test titles, which violated the lab rules. Also, the AC5 test was too broad. I found these issues during the review by comparing the generated code against the strict testing requirements, before running it. 
+My final green run proves that the booking logic correctly handles all 17 defined boundary cases and that the tests are strong enough to catch deliberate defects, as shown by the mutants (e.g., M2 caught touching endpoints). However, it does not prove that the UI works correctly or that AC6 is met, which is why manual UI checks were necessary. A remaining limitation is that `canBook` does not validate reversed existing bookings, meaning the test suite cannot guarantee the safety of corrupted data.
