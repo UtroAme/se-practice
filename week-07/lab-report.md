@@ -49,23 +49,23 @@ for every test. **The Expected column comes from AC1–AC4, never from the code.
 
 | ID | Candidate / changed input | Expected | AC | Reason (in your words) |
 | --- | --- | --- | --- | --- |
-| T01 | 660–720 (touching after) | true | AC4 | |
-| T02 | 540–570 (starts now) | false | AC1 | |
-| T03 | 720–720 (zero duration) | false | AC1 | |
-| T04 | 750–720 (reversed) | false | AC1 | |
-| T05 | 1380–1441 (past day end) | false | AC1 | |
-| T06 | 720–840 (120 minutes) | true | AC2 | |
-| T07 | 720–841 (121 minutes) | false | AC2 | |
-| T08 | 570–600 (touching before) | true | AC4 | |
-| T09 | 630–690 (partial overlap) | false | AC4 | |
-| T10 | 570–690 (contains booking) | false | AC4 | |
-| T11 | 615–645 (inside booking) | false | AC4 | |
-| T12 | 600–660 (identical interval) | false | AC4 | |
-| T13 | 660–720, blocked = true | false | AC3 | |
-| T14 | 630–690, bookings = [] | true | AC4 | |
-| AC5 | an Available request — the bookings after the call equal the bookings before | true, data unchanged | AC5 | |
-| X1 | | | | |
-| X2 | | | | |
+| T01 | 660–720 (touching after) | true | AC4 | The request starts exactly when the existing booking ends, so the intervals only touch and AC4 allows it. |
+| T02 | 540–570 (starts now) | false | AC1 | The request starts exactly at the current time; AC1 requires start to be strictly after now. |
+| T03 | 720–720 (zero duration) | false | AC1 | Zero duration violates AC1's requirement that the start must be strictly less than the end. |
+| T04 | 750–720 (reversed) | false | AC1 | A reversed interval has the start greater than the end, which AC1 forbids. |
+| T05 | 1380–1441 (past day end) | false | AC1 | The end time 1441 exceeds the maximum allowed day limit of 1440 in AC1. |
+| T06 | 720–840 (120 minutes) | true | AC2 | Duration is exactly 120 minutes; AC2 only rejects durations strictly longer than 120. |
+| T07 | 720–841 (121 minutes) | false | AC2 | Duration is 121 minutes, which is strictly longer than the 120-minute limit in AC2. |
+| T08 | 570–600 (touching before) | true | AC4 | The request ends exactly when the booking starts, so AC4 treats touching as allowed. |
+| T09 | 630–690 (partial overlap) | false | AC4 | The request overlaps the existing booking from 630 to 660, which AC4 forbids. |
+| T10 | 570–690 (contains booking) | false | AC4 | The request fully contains the booking, meaning it overlaps and AC4 forbids it. |
+| T11 | 615–645 (inside booking) | false | AC4 | The request sits entirely inside the booking, overlapping it, which AC4 forbids. |
+| T12 | 600–660 (identical interval) | false | AC4 | The request is identical to the booking, so it overlaps and AC4 forbids it. |
+| T13 | 660–720, blocked = true | false | AC3 | The room is blocked, and AC3 rejects any request when the blocked status is true. |
+| T14 | 630–690, bookings = [] | true | AC4 | There are no existing bookings to overlap, so AC4 allows it. |
+| AC5 | 660–720 (Available request) | true, data unchanged | AC5 | 660–720 is Available; the bookings array must be identical after the call because AC5 forbids changing data. |
+| X1 | 1380–1440 (ends at day end) | true | AC1 | Ends exactly at 1440, the maximum allowed by AC1; this is the other end-of-day boundary that T05 does not reach. |
+| X2 | 660–720, bookings = [{600,660}, {720,780}] | true | AC4 | Touches the end of one booking and the start of another at once; AC4 allows touching endpoints on both sides. |
 
 X1 and X2 are **your own two cases**: a boundary or a state that T01–T14 do not reach. Fill all
 five columns.
