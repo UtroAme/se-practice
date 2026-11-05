@@ -78,17 +78,215 @@ five columns.
 `Vitest`, followed by the case table from section 3:
 
 ```text
-(paste here)
+Generate tests for the existing booking function using Vitest. Use AC1–AC6 and the reviewed case table below.
+
+Import the real function used by the page. Keep its code unchanged. Use fixed time and fresh fixtures. Assert exact decisions and unchanged booking data.
+
+Return the test file, run command, and AC mapping. Flag unclear requirements. We will run the tests ourselves.
+
+Default fixture: now = 540, blocked = false, bookings = [{ start: 600, end: 660 }]. Fresh data per test.
+
+| ID | Candidate / changed input | Expected | AC |
+| --- | --- | --- | --- |
+| T01 | 660–720 (touching after) | true | AC4 |
+| T02 | 540–570 (starts now) | false | AC1 |
+| T03 | 720–720 (zero duration) | false | AC1 |
+| T04 | 750–720 (reversed) | false | AC1 |
+| T05 | 1380–1441 (past day end) | false | AC1 |
+| T06 | 720–840 (120 minutes) | true | AC2 |
+| T07 | 720–841 (121 minutes) | false | AC2 |
+| T08 | 570–600 (touching before) | true | AC4 |
+| T09 | 630–690 (partial overlap) | false | AC4 |
+| T10 | 570–690 (contains booking) | false | AC4 |
+| T11 | 615–645 (inside booking) | false | AC4 |
+| T12 | 600–660 (identical interval) | false | AC4 |
+| T13 | 660–720, blocked = true | false | AC3 |
+| T14 | 630–690, bookings = [] | true | AC4 |
+| AC5 | 660–720 (Available request) | true, data unchanged | AC5 |
+| X1 | 1380–1440 (ends at day end) | true | AC1 |
+| X2 | 660–720, bookings = [{600,660}, {720,780}] | true | AC4 |
+
+Here is the module under test (src/booking.ts):
+
+export type Interval = { start: number; end: number };
+export interface BookingRequest {
+  start: number;
+  end: number;
+  now: number;
+  blocked: boolean;
+  bookings: Interval[];
+}
+export function canBook({ start, end, now, blocked, bookings }: BookingRequest): boolean {
+  if (!(0 <= start && start < end && end <= 1440)) return false;
+  if (!(start > now)) return false;
+  if (end - start > 120) return false;
+  if (blocked) return false;
+  for (const b of bookings) {
+    if (start < b.end && end > b.start) return false;
+  }
+  return true;
+}
 ```
 
 **The assistant's answer: run command, AC mapping and any unclear requirements it flagged,
 pasted unedited.** Its test file goes to `suites/first/` and is not pasted here:
 
 ```text
-(paste here)
+I'll first check the actual project layout so the test imports the real function the page uses.
+
+The workspace is empty — no src/booking.ts, no package.json, no page. I'll write the test file against the module path you gave and flag that at the end.
+
+Trimming two bits of scope creep (an unused-constants sanity block and an off-table AC5 case).
+
+Written to src/booking.test.ts (17 tests, colocated next to the module). I could not execute it here — Vitest isn't installed in this workspace — so the expected values below come from tracing the code you pasted; you'll confirm by running.
+
+Run command
+
+code.sh
+
+
+npx vitest run src/booking.test.ts   # single run
+npx vitest                            # watch mode
+AC mapping
+
+AC	Group	Cases
+AC1 interval shape / start > now / within day	5	T02, T03, T04, T05, X1
+AC2 max 120 minutes	2	T06, T07
+AC3 blocked	1	T13
+AC4 overlap (half-open, touching allowed)	8	T01, T08, T09, T10, T11, T12, T14, X2
+AC5 pure decision, data unchanged	1	AC5
+AC6	0	— not covered, see flag 1
+
+
+All 17 table expectations match the implementation as written; no row contradicts the code.
+
+Flags (need your input)
+
+AC6 is undefined. The prompt says "use AC1–AC6" but no row references it and you haven't told me what it requires. Nothing is testable for it — please describe it (my guesses: returns a boolean strictly, or now/bookings bounds, or the reason for rejection).
+"The real function used by the page" doesn't exist here. This directory is empty — no src/booking.ts, no page, no package.json. I imported the named canBook export from ./booking per your snippet. If the page actually uses a default export, a path alias, or a different file, line 2–3 is the only thing that needs changing.
+"Fixed time" needs no fake timers. canBook receives now as a parameter and never reads the clock, so the fixed time is now = 540 in the fixture. If some page-level code computes now from Date, that logic is untested and untestable through this module.
+AC5 "unchanged booking data" is interpreted as non-mutation of the input. The function returns only a boolean and takes no store, so I assert the request object and bookings array are byte-identical after the call. If AC5 means "the persisted/page state is unchanged after an Available request", I need a stateful fixture (store or component) that doesn't exist in this workspace yet.
+
+import { describe, expect, it } from 'vitest';
+import { canBook } from './booking';
+import type { BookingRequest, Interval } from './booking';
+
+const NOW = 540;
+
+// Fresh fixtures per test: no object or array is ever shared between cases.
+function booking(start: number, end: number): Interval {
+  return { start, end };
+}
+
+function request(overrides: Partial<BookingRequest> = {}): BookingRequest {
+  return {
+    start: 660,
+    end: 720,
+    now: NOW,
+    blocked: false,
+    bookings: [booking(600, 660)],
+    ...overrides,
+  };
+}
+
+describe('canBook', () => {
+  describe('AC1 - interval shape, start strictly after now, inside the day', () => {
+    it('T02: rejects a slot that starts exactly at now', () => {
+      expect(canBook(request({ start: 540, end: 570 }))).toBe(false);
+    });
+
+    it('T03: rejects a zero-duration slot', () => {
+      expect(canBook(request({ start: 720, end: 720 }))).toBe(false);
+    });
+
+    it('T04: rejects a reversed interval', () => {
+      expect(canBook(request({ start: 750, end: 720 }))).toBe(false);
+    });
+
+    it('T05: rejects a slot ending past the end of the day', () => {
+      expect(canBook(request({ start: 1380, end: 1441 }))).toBe(false);
+    });
+
+    it('X1: accepts a slot ending exactly at the end of the day', () => {
+      expect(canBook(request({ start: 1380, end: 1440 }))).toBe(true);
+    });
+  });
+
+  describe('AC2 - maximum slot length', () => {
+    it('T06: accepts exactly 120 minutes', () => {
+      expect(canBook(request({ start: 720, end: 840 }))).toBe(true);
+    });
+
+    it('T07: rejects 121 minutes', () => {
+      expect(canBook(request({ start: 720, end: 841 }))).toBe(false);
+    });
+  });
+
+  describe('AC3 - blocked calendar', () => {
+    it('T13: rejects an otherwise bookable slot when blocked', () => {
+      expect(canBook(request({ start: 660, end: 720, blocked: true }))).toBe(false);
+    });
+  });
+
+  describe('AC4 - overlap with existing bookings (half-open intervals)', () => {
+    it('T01: accepts a slot touching a booking on its end', () => {
+      expect(canBook(request({ start: 660, end: 720 }))).toBe(true);
+    });
+
+    it('T08: accepts a slot touching a booking on its start', () => {
+      expect(canBook(request({ start: 570, end: 600 }))).toBe(true);
+    });
+
+    it('T09: rejects a partial overlap', () => {
+      expect(canBook(request({ start: 630, end: 690 }))).toBe(false);
+    });
+
+    it('T10: rejects a slot that contains a booking', () => {
+      expect(canBook(request({ start: 570, end: 690 }))).toBe(false);
+    });
+
+    it('T11: rejects a slot inside a booking', () => {
+      expect(canBook(request({ start: 615, end: 645 }))).toBe(false);
+    });
+
+    it('T12: rejects a slot identical to a booking', () => {
+      expect(canBook(request({ start: 600, end: 660 }))).toBe(false);
+    });
+
+    it('T14: accepts a slot when there are no bookings', () => {
+      expect(canBook(request({ start: 630, end: 690, bookings: [] }))).toBe(true);
+    });
+
+    it('X2: accepts a slot boxed in by bookings on both sides', () => {
+      expect(
+        canBook(
+          request({
+            start: 660,
+            end: 720,
+            bookings: [booking(600, 660), booking(720, 780)],
+          }),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  describe('AC5 - pure decision, booking data unchanged', () => {
+    it('AC5: returns true and leaves the request and bookings untouched', () => {
+      const req = request({ start: 660, end: 720 });
+      const requestBefore = structuredClone(req);
+
+      const result = canBook(req);
+
+      expect(result).toBe(true);
+      expect(req).toEqual(requestBefore);
+      expect(req.bookings).toEqual([{ start: 600, end: 660 }]);
+      expect(req.bookings).toHaveLength(1);
+    });
+  });
+});
 ```
 
-The first suite was saved to `suites/first/` **before** I changed anything in it: yes / no
+The first suite was saved to `suites/first/` **before** I changed anything in it: no
 
 ---
 
