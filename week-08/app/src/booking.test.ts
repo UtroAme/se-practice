@@ -112,3 +112,22 @@ describe('canBook', () => {
     });
   });
 });
+
+test('BUG-A: a request that touches existing bookings on both sides is Available', () => {
+  const bookings = [
+    { start: 600, end: 660 },
+    { start: 720, end: 780 },
+  ];
+  // 660-720 touches the first at 660 and the second at 720, touches nothing else
+  const result = canBook({ start: 660, end: 720, now: 480, blocked: false, bookings });
+  expect(result).toBe(true);
+});
+
+test('BUG-B: canBook on an Available request does not change the bookings', () => {
+  const bookings = [{ start: 600, end: 660 }];
+  const before = JSON.parse(JSON.stringify(bookings));
+  // 720-780 touches nothing, so BUG-A cannot reject it and hide BUG-B
+  const result = canBook({ start: 720, end: 780, now: 480, blocked: false, bookings });
+  expect(result).toBe(true);
+  expect(bookings).toEqual(before);
+});
