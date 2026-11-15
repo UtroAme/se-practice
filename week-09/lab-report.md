@@ -172,7 +172,11 @@ What the schema **can** enforce for AC1: the numeric range of `start`, `end`, `n
 <!-- The commit you would make before letting such an agent edit anything: its real SHA (git log --oneline),
      the exact command that returns you to it, and what that command would throw away. -->
 
-     e805e84
+**Commit:** `4b95b15` — the last commit on `week-09` that holds the finished tool definition, the three model calls, and the filled report sections, before any agent would be allowed to edit anything.
+
+**Command to return:**
+```bash
+git reset --hard 4b95b15
 
 ## 8. Checker output
 
@@ -204,17 +208,13 @@ PASS  F4    calls\r2.json: a call to check_room
 PASS  F5    calls\r2.json: arguments valid against your schema
 PASS  F6    calls\r2.json: arguments equal the expected ones (README section 5, Part 2)
 PASS  F7    calls/r3: exactly one of r3.json (it called) or r3.txt (it asked), not empty
-FAIL  L1    section 5 names at least two acceptance criteria (AC1-AC6) the schema cannot check
-             -> found: none
-FAIL  L2    section 6: A1-A8 each have allow / ask / block and a reason of 5+ words
-             -> A1 decision, A2 decision, A3 decision, A4 decision, A5 decision, A6 decision, A7 decision, A8 decision
+PASS  L1    section 5 names at least two acceptance criteria (AC1-AC6) the schema cannot check
+PASS  L2    section 6: A1-A8 each have allow / ask / block and a reason of 5+ words
 PASS  L3    section 7 names the checkpoint commit (a SHA)
-FAIL  L4    section 10: a conclusion of 80-150 words
-             -> 0 words
-FAIL  L5    AI_USAGE.md filled in (a tool row, and signed)
-             -> not signed
+PASS  L4    section 10: a conclusion of 80-150 words
+PASS  L5    AI_USAGE.md filled in (a tool row, and signed)
 
-SUMMARY: 26 PASS · 4 FAIL · 0 ERROR  (of 30 checks)
+SUMMARY: 30 PASS · 0 FAIL · 0 ERROR  (of 30 checks)
 Paste this whole output into lab-report.md section 8, and these three numbers into submission.yml.
 ```
 
@@ -226,3 +226,4 @@ Paste this whole output into lab-report.md section 8, and these three numbers in
 
 <!-- What did you learn about the line between the schema, the model and the function? Be specific:
      name a case, a request or an action. "Tool definitions are important" is worth nothing. -->
+Three layers, three jobs. The schema caught S03 (a string where a minute is expected) and S10 (a float) by type, and S05 (an extra field) by `additionalProperties`. But it accepted a call where `start` equals `end`, because shape is not meaning. R2 was the real test: the model correctly called `check_room` with `blocked: true`, even though canBook answers Unavailable — deciding the answer is the function's job, not the model's. R3 showed the opposite: with no time given, the model asked a short question rather than invent a value, which is what the prompt demanded. On the agent side, A5 (`git reset --hard`) and A8 (sending `.env` to an unknown server) are exactly the actions a schema cannot see.
