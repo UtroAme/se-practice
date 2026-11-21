@@ -18,3 +18,19 @@ export function canBook({ start, end, now, blocked, bookings }: {
   }
   return true;
 }
+
+export function checkRoom(
+  rooms: { id: string; blocked: boolean; bookings: { start: number; end: number }[] }[],
+  roomId: string,
+  request: { start: number; end: number; now: number }
+): boolean {
+  const room = rooms.find((r) => r.id === roomId);
+  if (!room) return false;
+  return canBook({
+    start: request.start,
+    end: request.end,
+    now: request.now,
+    blocked: room.blocked,
+    bookings: room.bookings,
+  });
+}

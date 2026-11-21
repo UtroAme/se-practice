@@ -43,11 +43,11 @@ describe('canBook', () => {
   });
 
   describe('AC2 - maximum slot length', () => {
-    test('T06 AC2: accepts exactly 120 minutes', () => {
+    test('T06 B1 AC2: accepts exactly 120 minutes', () => {
       expect(canBook(request({ start: 720, end: 840 }))).toBe(true);
     });
 
-    test('T07 AC2: rejects 121 minutes', () => {
+    test('T07 B2 AC2: rejects 121 minutes', () => {
       expect(canBook(request({ start: 720, end: 841 }))).toBe(false);
     });
   });
@@ -59,7 +59,7 @@ describe('canBook', () => {
   });
 
   describe('AC4 - overlap with existing bookings', () => {
-    test('T01 AC4: accepts a slot touching a booking on its end', () => {
+    test('T01 B3 AC4: accepts a slot touching a booking on its end', () => {
       expect(canBook(request({ start: 660, end: 720 }))).toBe(true);
     });
 
@@ -67,7 +67,7 @@ describe('canBook', () => {
       expect(canBook(request({ start: 570, end: 600 }))).toBe(true);
     });
 
-    test('T09 AC4: rejects a partial overlap', () => {
+    test('T09 B4 AC4: rejects a partial overlap', () => {
       expect(canBook(request({ start: 630, end: 690 }))).toBe(false);
     });
 
