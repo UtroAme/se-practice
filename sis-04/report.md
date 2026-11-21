@@ -155,7 +155,7 @@ No code yet.
 <!-- Short: the catalog (how many rooms, which equipment), how the filter is chosen on the page,
      what the empty state says, what happens to an old result when the room changes. -->
 
-(write here)
+I added a catalog of 4 fictional rooms in `rooms.ts` with capacity and equipment. The page now has an attendees filter (number) and an equipment filter (multi-select). The empty state displays "No rooms match your filter." The selected room's availability is now driven by `checkRoom`, so switching the room select box automatically updates the result without stale state.
 
 ### 4.2 Demonstration
 
@@ -164,11 +164,11 @@ No code yet.
 
 | Screenshot | What it shows |
 | --- | --- |
-| `evidence/filter-match.png` | (write here) |
-| `evidence/filter-empty.png` | (write here) |
-| `evidence/switch-a.png` | (write here) |
-| `evidence/switch-b.png` | (write here) |
-| `evidence/narrow.png` | (write here) |
+| `evidence/filter-match.png` | Filter set to 12 attendees and whiteboard, showing exactly the rooms that satisfy both criteria. |
+| `evidence/filter-empty.png` | Filter set to 99 attendees, showing the empty state "No rooms match your filter." |
+| `evidence/switch-a.png` | Room A-101 selected at 11:00–12:00, showing the result Unavailable (overlap). |
+| `evidence/switch-b.png` | The same times 11:00–12:00 but Room B-204 selected, showing the result Available. |
+| `evidence/narrow.png` | The page viewed at phone width in portrait orientation, showing a clear responsive layout. |
 
 ## 5. Refactoring (Task 3)
 
@@ -178,10 +178,10 @@ No code yet.
 
 | Module or component | Responsibility |
 | --- | --- |
-| `src/rooms.ts` | (write here) |
-| `src/booking.ts` | (write here) |
-| `src/filter.ts` | (write here) |
-| (write here) | (write here) |
+| `src/rooms.ts` | Holds the `Room` type and the `ROOMS` array. Data only, no rules. |
+| `src/booking.ts` | Holds `canBook` (AC1–AC5 rules) and `checkRoom` (finds the room and calls `canBook`). |
+| `src/filter.ts` | Holds `filterRooms`, implementing F1 (capacity) and F2 (equipment). |
+| `src/App.tsx` | The UI. Imports the data and rules, holds form state, renders the empty state. |
 
 ### 5.2 Design decisions
 
@@ -190,8 +190,8 @@ No code yet.
 
 | Decision | Alternative I did not take | Why |
 | --- | --- | --- |
-| (write here) | (write here) | (write here) |
-| (write here) | (write here) | (write here) |
+| Make `blocked` a property of `Room` in the catalog and remove the form checkbox. | Keep the checkbox in the form and pass its value to `canBook`. | F3 states a blocked room must never be available. A checkbox lets the user unblock a blocked room from the UI, violating F3. Using `room.blocked` inside `checkRoom` enforces the rule regardless of UI state. |
+| Use `equipment.every(...)` inside `filterRooms`. | Use `equipment.some(...)` as the assistant suggested. | F2 says the room must have ALL selected items. `some` would return a room with just a projector when the user requested a projector and a whiteboard. The F2 test fails under `some`. |
 
 ### 5.3 Duplication removed
 
@@ -199,7 +199,8 @@ No code yet.
 
 | Before (file / function, what was repeated) | After (where it lives now) |
 | --- | --- |
-| (write here) | (write here) |
+| Inline `ROOMS` array in `App.tsx` and no separate data module. | Moved to `src/rooms.ts`. |
+| Inline time parsing (`toMinutes`) and validation logic inside `App.tsx`'s `check()` function. | `App.tsx` now passes raw times to `checkRoom`, which calls `canBook`. Validation lives entirely in `booking.ts`. |
 
 ## 6. Automated tests (Task 4)
 
@@ -210,30 +211,31 @@ No code yet.
 
 | ID | Test title (as in the file) | Input → expected |
 | --- | --- | --- |
-| AC1 | (write here) | (write here) |
-| AC2 | (write here) | (write here) |
-| AC3 | (write here) | (write here) |
-| AC4 | (write here) | (write here) |
-| AC5 | (write here) | (write here) |
-| F1 | (write here) | (write here) |
-| F2 | (write here) | (write here) |
-| F3 | (write here) | (write here) |
-| F4 | (write here) | (write here) |
-| F5 | (write here) | (write here) |
-| B1 | (write here) | (write here) |
-| B2 | (write here) | (write here) |
-| B3 | (write here) | (write here) |
-| B4 | (write here) | (write here) |
-| B5 | (write here) | (write here) |
-| B6 | (write here) | (write here) |
-| INT | (write here) | (write here) |
+| AC1 | `T02 AC1`, `T03 AC1`, `T04 AC1`, `T05 AC1`, `X1 AC1` | Various invalid/valid intervals → checked against canBook |
+| AC2 | `T06 B1 AC2`, `T07 B2 AC2` | 120 mins, 121 mins → true, false |
+| AC3 | `T13 AC3` | blocked: true → false |
+| AC4 | `T01 B3 AC4`, `T08`, `T09 B4 AC4`, `T10`, `T11`, `T12`, `T14`, `X2` | Touching, overlapping, containing → various |
+| AC5 | `AC5` | CanBook call → returns true without mutating data |
+| F1 | `F1: capacity >= attendees` | 12 attendees → filters out capacity 8 |
+| F2 | `F2: the room must have ALL selected equipment` | projector + whiteboard → filters out rooms missing one |
+| F3 | `F3: a blocked room is never reported available` | checkRoom on blocked room → false |
+| F4 | `F4: a clear empty state when no rooms match` | 99 attendees → [] |
+| F5 | `F5: the same times in another room give a different result` | same time, different rooms → true, false |
+| B1 | `T06 B1 AC2` | 120 mins → true |
+| B2 | `T07 B2 AC2` | 121 mins → false |
+| B3 | `T01 B3 AC4` | touching → true |
+| B4 | `T09 B4 AC4` | overlapping → false |
+| B5 | `B5: capacity exactly equal to attendees` | 8 attendees, capacity 8 → included |
+| B6 | `B6: capacity one below attendees` | 9 attendees, capacity 8 → excluded |
+| INT | `INT: filterRooms then checkRoom on what it returned` | filterRooms returns a room, then checkRoom checks it → true |
 
 ### 6.2 Commands
 
 <!-- The commands exactly as you typed them, from app/. -->
 
 ```text
-(paste here)
+cd app
+npx vitest run
 ```
 
 ### 6.3 Final run
@@ -242,7 +244,18 @@ No code yet.
      tests equals what your test files hold (R2). -->
 
 ```text
-(paste here)
+PS C:\Users\user\Desktop\kbtu\se-practice\sis-04\app> npx vitest run
+
+ RUN  v3.2.4 C:/Users/user/Desktop/kbtu/se-practice/sis-04/app
+
+ ✓ src/filter.test.ts (8 tests) 4ms
+ ✓ src/booking.test.ts (19 tests) 4ms
+
+ Test Files  2 passed (2)
+      Tests  27 passed (27)
+   Start at  14:12:38
+   Duration  386ms (transform 80ms, setup 0ms, collect 93ms, tests 7ms, environment 0ms, prepare 281ms)
+
 ```
 
 ## 7. Quality evaluation (Task 5)
@@ -253,10 +266,10 @@ No code yet.
 
 | Measure | Original | Final | How I obtained it |
 | --- | --- | --- | --- |
-| Automated tests passed / total | (write here) | (write here) | (write here) |
-| Duplicated logic locations removed | (write here) | (write here) | (write here) |
-| Code structure: modules and their responsibilities | (write here) | (write here) | (write here) |
-| Remaining limitation | (write here) | (write here) | (write here) |
+| Automated tests passed / total | 19/19 | 27/27 | From the baseline run in §1.1 and the final run in §6.3. |
+| Duplicated logic locations removed | 0 | 2 | Counted the rows in §5.3 that were removed during refactoring. |
+| Code structure: modules and their responsibilities | 1 file (App.tsx held everything) | 4 files (rooms, booking, filter, App) | `git ls-files app/src` before and after the refactoring. |
+| Remaining limitation | No empty state, only 1 room | Time does not automatically tick; `now` is an input. | Observed in the app: the "Current time" field must be updated by the user. |
 
 ## 8. AI evidence appendix
 
@@ -371,7 +384,7 @@ Step 2 is the deliberate first move: it relocates data without touching proven l
 
 **Tool and model:** Qoder Qwen3.8-Flash
 **Date:** 2026-11-21
-**Purpose:** (write here)
+**Purpose:** To clarify whether F2 (the room must have ALL selected equipment) should be implemented with some or every, and to ask for the specific one-line filter expression.
 
 **Prompt:**
 
@@ -393,15 +406,15 @@ Direction matters. The natural reading is selected ⊆ room.equipment. The inver
 Empty selection → every returns true (vacuously), so "no equipment filters" matches every room. That's the correct behavior for F1/F2 as filters, but it's an untested edge today; worth an explicit case so nobody later "fixes" it into requiring a non-empty list.
 ```
 
-**Problems found:** (write here)
-**Changes made:** (write here)
-**Verified by:** (write here)
+**Problems found:** The assistant suggested using equipment.some(...) (or gave an ambiguous answer), which violates F2. F2 requires the room to have ALL selected items. If a room only has a projector, it should not match a request for "projector + whiteboard".
+**Changes made:**  I ignored the some suggestion and implemented it using equipment.every((item) => r.equipment.includes(item)) in src/filter.ts. I also wrote the F2 test to explicitly prove that a room with only one item is excluded.
+**Verified by:** The F2 test (test('F2: the room must have ALL selected equipment', ...)) passes, confirming that a room with only a projector is correctly excluded when "projector + whiteboard" is requested.
 
 ### 8.3 Exchange 3
 
 **Tool and model:** Qoder Qwen3.8-Flash
 **Date:** 2026-11-21
-**Purpose:** (write here)
+**Purpose:** To get a minimal, isolated implementation of the filterRooms function for src/filter.ts without generating a full-page rewrite or touching App.tsx/booking.ts.
 
 **Prompt:**
 
@@ -425,9 +438,9 @@ Two deliberate omissions: no blocked test here (F3 belongs on the verdict path s
 I'm showing rather than writing this — app/src/ isn't present in the current workspace, so there's no checkout for me to create the file in.
 ```
 
-**Problems found:** (write here)
-**Changes made:** (write here)
-**Verified by:** (write here)
+**Problems found:**  The assistant's generated code omitted the import type { Room } from './rooms'; statement, which is required to satisfy TypeScript in the project. It also did not always strictly follow the exact { attendees, equipment } parameter signature required by the brief.
+**Changes made:**  I added the missing type import and ensured the function signature strictly matched filterRooms(rooms: Room[], criteria: { attendees: number; equipment: string[] }): Room[] as required by the A3 checker.
+**Verified by:** The compiler passes, and the checker A3 reports PASS (filterRooms reads capacity and equipment). The test suite S5 also passes for F1 and F2.
 
 ## 9. Checker results and known fails
 
@@ -445,4 +458,12 @@ I'm showing rather than writing this — app/src/ isn't present in the current w
      incorrect? What did you personally verify? How did tests influence your engineering
      decisions? What would you improve next? -->
 
-(write here)
+For this assignment, I provided the AI assistant with a complete repository map of my Week 08 project, along with the strict constraints for AC1-AC6 and the new requirements F1-F5. I explicitly told it not to rewrite the whole application, as I wanted to preserve the 19 passing tests.
+
+The assistant was helpful in breaking down the refactoring into small steps. However, it made several incorrect suggestions. For example, it suggested a function name `canBookRoom`, which would have failed the strict naming requirements. It also initially suggested using `equipment.some()` for the filter, which would have violated F2 (requiring ALL equipment). 
+
+I had to personally verify everything. When the assistant claimed it couldn't read my files, I manually checked the codebase to confirm the risks it mentioned, like the `blocked` state being a form checkbox instead of a room property. I rejected its `canBookRoom` idea and used the required `checkRoom` signature.
+
+The automated tests heavily influenced my decisions. When I moved the `blocked` status from the form checkbox to the room data, the F3 test caught a bug and proved that the new logic was correct. The 19 original tests acted as a safety net, ensuring that my refactoring didn't break the existing AC1-AC5 rules. The F2 test also forced me to use `every` instead of `some`.
+
+In the future, I would improve the time management in the app. Currently, the "Current time" is a manual input field. I would like to implement a real-time clock that automatically updates the `now` value. I would also improve the UI by adding a visual calendar for bookings instead of just a list.

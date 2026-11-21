@@ -9,4 +9,15 @@
 '   @enduml
 '
 @startuml
+skinparam componentStyle rectangle
+
+package "App.tsx (Monolith)" {
+  component "Inline ROOMS data" as Data
+  component "Inline booking rules" as Rules
+  component "UI rendering & state" as UI
+}
+
+UI --> Data
+UI --> Rules
+
 @enduml
