@@ -25,7 +25,7 @@ assistant:
 
 project:                        # exactly as in report.md section 1
   start_from:                   # week-08 | week-07 | sis-03 | starter
-  baseline_commit:              # the commit that brought the starting point in unchanged
+  baseline_commit: 60959b2             # the commit that brought the starting point in unchanged
   language:                     # ts | js
   vitest:                       # the version from the "RUN  v..." line, e.g. 3.2.4
 
